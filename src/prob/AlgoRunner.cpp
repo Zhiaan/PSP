@@ -9,8 +9,9 @@ void AlgoRunner::run(vector<string>& arguments){
     Data d;
     vector<string> filePathList = d.getPathList(p);      // 获得所有测试实例的路径
 
-    vector<instance> instances = d.getInstance(filePathList);   // 获得所有测试实例
-    for(auto ins: instances){
+    for (const auto &filePath: filePathList) {
+        instance ins = d.getInstance(filePath);
+
         vector<solution> solutions = chooseAlgo(p.algoName, ins);
 
         // 结果输出

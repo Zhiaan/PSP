@@ -57,3 +57,45 @@ vector<instance> Data::getInstance(vector<string> filePathList) {
     }
     return instances;
 }
+
+static vector<string> split(const string &str, const string &pattern)
+{
+    vector<string> res;
+    if(str == "")
+        return res;
+    // 在字符串末尾也加入分隔符，方便截取最后一段
+    string strs = str + pattern;
+    size_t pos = strs.find(pattern);
+
+    while(pos != strs.npos)
+    {
+        string temp = strs.substr(0, pos);
+        res.push_back(temp);
+        // 去掉已分割的字符串,在剩下的字符串中进行分割
+        strs = strs.substr(pos+1, strs.size());
+        pos = strs.find(pattern);
+    }
+
+    return res;
+}
+
+instance Data::getInstance(const string &filePath) {
+    IO io;
+    vector<vector<string>> file = io.readCSV(filePath);
+    instance ins;
+    auto instanceNo = split(filePath, "/").back();
+    ins.instanceNo = instanceNo.substr(0, instanceNo.size() - 4);
+    ins.cars = {};
+    for(auto i: file){
+        carInfo c;
+        c.carNo = stoi(i[0]);
+        c.type = i[1];
+        c.bodyColor = i[2];
+        c.roofColor = i[3];
+        c.materialNo = i[4];
+        c.engine = i[5];
+        c.speedTrans = i[6];
+        ins.cars.emplace_back(c);
+    }
+    return ins;
+}
