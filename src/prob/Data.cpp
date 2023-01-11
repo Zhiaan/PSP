@@ -70,7 +70,7 @@ instance Data::getInstance(const string &filePath) {
         c.roofColor = i[3];
         c.materialNo = i[4];
         c.engine = i[5];
-        c.speedTrans = i[6];
+        c.speedTrans = i[6].erase(i[6].size()-1);
         ins.cars.emplace_back(c);
     }
     return ins;

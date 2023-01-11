@@ -52,10 +52,10 @@ solution Greedy::greedyRunner() {
     cout << s.sequence.size() << endl;
 
     // 比较 0...n-1 序列
-    // s.sequence.clear();
-    // for (int i = 0; i < 103; ++i) {
-    //     s.sequence.emplace_back(i);
-    // }
+     s.sequence.clear();
+     for (int i = 0; i < 103; ++i) {
+         s.sequence.emplace_back(i);
+     }
 
     evaluation(s);
 
@@ -69,7 +69,20 @@ void Greedy::evaluation(solution &s) {
 
     int typeCommonTime = 1;
     int colorCommonTime = 0;
+    int speedTransCommonTime = 0;   // 连续四驱次数
     for(int i = 0; i != s.sequence.size() - 1; ++i){
+        // 记录四驱连续次数
+        if(ins.cars[s.sequence[i]].speedTrans == "四驱"){
+            ++speedTransCommonTime;
+            if(speedTransCommonTime == 4){  // 连续四驱数量到4 将目标值设为极大值
+                s.obj1 = s.obj2 = s.obj3 = INT_MAX / 2;
+                goto label;
+            }
+        }
+        else{
+            speedTransCommonTime = 0;
+        }
+
         // obj1 焊装总等待时间
         if(ins.cars[s.sequence[i]].type == ins.cars[s.sequence[i + 1]].type){   // 如果前后相等 记录连续相等车数
             ++typeCommonTime;
@@ -101,12 +114,17 @@ void Greedy::evaluation(solution &s) {
         }
 
     }
+    if(speedTransCommonTime == 3 and ins.cars[*(s.sequence.end()-1)].speedTrans == "四驱"){
+        s.obj1 = s.obj2 = s.obj3 = INT_MAX / 2;
+        goto label;
+    }
     if(ins.cars[*(s.sequence.end()-1)].roofColor != "无对比颜色" and ins.cars[*(s.sequence.end()-1)].roofColor != ins.cars[*(s.sequence.end()-1)].bodyColor){     // 最后一辆车的车顶颜色!=车身颜色
         ++s.obj2;
     }
 
     // obj3
     s.obj3 += s.obj1 + ins.weldingTime * s.sequence.size() + s.obj2 * ins.paintingWaitingTime + ins.paintingTime * 2 * s.sequence.size() + ins.assembleTime * s.sequence.size();
-
-
+    label:
+    cout << s.obj1 << ' ' << s.obj2 << ' ' << s.obj3 << endl;
+    return ;
 }
