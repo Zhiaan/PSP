@@ -29,7 +29,11 @@ git pull --rebase
 
 修改完成后，提交文件到远程仓库。
 ```
-git add .
+git status // 查看文件状态
+
+git stash // 改的东西存起来
+git stash pop // 可能会发生冲突
+git add filename
 git commit -m "some useful message"
 git push
 ```
