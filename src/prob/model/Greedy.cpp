@@ -20,16 +20,43 @@ solution Greedy::greedyRunner() {
 
     // TODO 在这里写就可以 输出写好了
 
+   // 使用副本
+    vector<carInfo> cars = ins.cars;
 
+    auto sortedByType = [](vector<carInfo> &cars) {
+        std::sort(cars.begin(), cars.end(), [](const carInfo &a, const carInfo &b) {
+            return a.type < b.type;
+        });
+    };
+    auto sortedByRoofColor = [](vector<carInfo> &cars) {
+        std::sort(cars.begin(), cars.end(), [](const carInfo &a, const carInfo &b) {
+            return a.roofColor < b.roofColor;
+        });
+    };
 
-//    solution test;
-//    for(int i = 0; i != 103; ++i){
-//        test.sequence.emplace_back(i);
-//    }
-//
-//    for(int i: test.sequence){
-//        cout << i << ' ';
-//    }cout << endl;
+    sortedByType(cars);
+    auto iter = std::find_if(cars.begin(), cars.end(), [](const carInfo &a) {
+        return a.type == "B";
+    });
+    vector<carInfo> cars_A = vector<carInfo>(cars.begin(), iter);
+    vector<carInfo> cars_B = vector<carInfo>(iter, cars.end());
+    sortedByRoofColor(cars_A);
+    sortedByRoofColor(cars_B);
+
+    for (const auto &car_a : cars_A) {
+        s.sequence.emplace_back(car_a.carNo);
+    }
+    for (const auto &car_b : cars_B) {
+        s.sequence.emplace_back(car_b.carNo);
+    }
+    cout << s.sequence.size() << endl;
+
+    // 比较 0...n-1 序列
+    // s.sequence.clear();
+    // for (int i = 0; i < 103; ++i) {
+    //     s.sequence.emplace_back(i);
+    // }
+
     evaluation(s);
 
     return s;
