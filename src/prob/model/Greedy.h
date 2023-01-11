@@ -15,6 +15,7 @@ public:
     Greedy(instance);
 private:
     instance ins;
+    void evaluation(solution&);
 };
 
 

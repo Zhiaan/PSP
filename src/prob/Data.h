@@ -37,7 +37,6 @@ class Data {
 public:
     string filename;
     vector<string> getPathList(Param p);        // 获得所有算例的路径
-    vector<instance> getInstance(vector<string>);       // 获得算例集合
     instance getInstance(const string &);       // 获得算例集合
 };
 

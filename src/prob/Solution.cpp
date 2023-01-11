@@ -12,8 +12,6 @@ Solution::Solution(vector<solution> s, instance i, string pathHead) {
 
 void Solution::outputCSV() {        // 输出csv
     string outputPath = outputPathHead + ins.instanceNo + ".csv";
-
-    cout << outputPath << endl;
     IO io;
     string head = "";
     for(int i = 1; i != stoi(ins.instanceNo.substr(5, ins.instanceNo.size() == 8 ? 3 : 4)) + 1; ++i){
@@ -26,7 +24,7 @@ void Solution::outputCSV() {        // 输出csv
     for(auto solution: outputResult){
         string outputSolution = "";
         for(auto index: solution.sequence){
-            outputSolution += to_string(index) + ",";
+            outputSolution += to_string(index + 1) + ",";
         }
         outputSolution += to_string(solution.obj1) + "," + to_string(solution.obj2) + "," + to_string(solution.obj3);
         io.writeCSV(outputPath, outputSolution);

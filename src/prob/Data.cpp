@@ -34,30 +34,6 @@ vector<string> Data::getPathList(Param p) {
     return allPath;
 }
 
-vector<instance> Data::getInstance(vector<string> filePathList) {
-    vector<instance> instances = {};
-    for(string filePath: filePathList) {
-        IO io;
-        vector<vector<string>> file = io.readCSV(filePath);
-        instance ins;
-        ins.instanceNo = filePath.substr(32, filePath.size() == 44 ? 8 : 9);
-        ins.cars = {};
-        for(auto i: file){
-            carInfo c;
-            c.carNo = stoi(i[0]);
-            c.type = i[1];
-            c.bodyColor = i[2];
-            c.roofColor = i[3];
-            c.materialNo = i[4];
-            c.engine = i[5];
-            c.speedTrans = i[6];
-            ins.cars.emplace_back(c);
-        }
-        instances.emplace_back(ins);
-    }
-    return instances;
-}
-
 static vector<string> split(const string &str, const string &pattern)
 {
     vector<string> res;

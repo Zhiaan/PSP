@@ -11,10 +11,10 @@
 #include <vector>
 using namespace std;
 struct solution{
-    vector<int> sequence;
-    double obj1;
-    double obj2;
-    double obj3;
+    vector<int> sequence;   // 从0开始
+    double obj1;        // 焊装切换次数
+    double obj2;        // 涂装闲置时间
+    double obj3;        // 总时长
 };
 
 class Solution {

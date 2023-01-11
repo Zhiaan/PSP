@@ -9,7 +9,10 @@ void AlgoRunner::run(vector<string>& arguments){
     Data d;
     vector<string> filePathList = d.getPathList(p);      // 获得所有测试实例的路径
 
-    for (const auto &filePath: filePathList) {
+//    for (const auto &filePath: filePathList) {
+// TODO 先处理一个测试实例
+        string filePath = p.dataPath + "/data_103.csv";
+        cout << filePath << endl;
         instance ins = d.getInstance(filePath);
 
         vector<solution> solutions = chooseAlgo(p.algoName, ins);
@@ -17,7 +20,7 @@ void AlgoRunner::run(vector<string>& arguments){
         // 结果输出
         Solution sol(solutions, ins, p.outputPath);
         sol.outputCSV();
-    }
+//    }
 }
 
 vector<solution> AlgoRunner::chooseAlgo(string algoName, instance ins) {
