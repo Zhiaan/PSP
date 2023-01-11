@@ -6,7 +6,7 @@
 using namespace std;
 
 Param::Param(vector<string>& arguments) {
-    // Param
+    // Param .
     problemName = "PSP";
     algoName = arguments[1];        // 使用的算法名称
     carNum = arguments[0] == "" ? vector<int>{} : vector<int>{stoi(arguments[0])};      // 测试集车辆数目
