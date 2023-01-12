@@ -14,22 +14,35 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     vector<solution> solutions;
 
     vector<chromosome> population(populationSize);
+//    vector<chromosome> population(1);
+
+    // 生成初始解
     greedyObj2InitializePopulation(population);     // obj2贪婪算法初始化种群
 //    randomInitializePopulation(population);           // 随机初始化种群
+
+    vector<chromosome> newPopulation = population;      // 生成新种群
+    cross(newPopulation);                           // 交叉算子
+
+    mutation(newPopulation);                        // 变异算子
+
+    population.insert(population.end(), newPopulation.begin(), newPopulation.end());    // 老种群与新种群合并
     cout << population.size() << endl;
 
-    for(auto i: population){
-        for(auto j: i.sequence){
-            cout << j << ' ';
-        }cout << endl;
-        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << endl;
-    }
+    nondominatedSorting(population);
+
+//    cout << newPopulation.size() << endl;
+//    for(auto i: newPopulation){
+//        for(auto j: i.sequence){
+//            cout << j << ' ';
+//        }cout << endl;
+//        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << endl;
+//    }
 
     return solutions;
 }
 
 void ImprovedNSGA2::evaluation(chromosome &c) {
-    c.objs = vector<double>(3, 0);  // 三目标值归零
+    c.objs = vector<double>(4, 0);  // 三目标值归零
     vector<int> test = c.sequence;
     sort(test.begin(), test.end());
     vector<int> examine(ins.cars.size());
@@ -273,6 +286,95 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 
 }
 
+void ImprovedNSGA2::cross(vector<chromosome>& population) {
+    for(int i = 0; i < population.size(); i += 2){
+        vector<int> parent1 = population[i].sequence;
+        vector<int> parent2 = population[i+1].sequence;
+        // 生成位置序列（0-1）
+        vector<int> position(parent1.size(), 0);
+
+        // 记录需要换顺序的元素
+        vector<pair<int, int>> genes1 = {};
+        vector<pair<int, int>> genes2 = {};
+        for(int i = 0; i != position.size(); ++i){
+            position[i] = ::rand() % 2;
+            if(position[i] == 1){
+                genes1.emplace_back(pair<int, int>{parent1[i], 0});
+                genes2.emplace_back(pair<int, int>{parent2[i], 0});
+            }
+        }
+
+//        for(auto i: genes1)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
+//        for(auto i: genes2)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
+
+        for(auto& i: genes1){        // 找到在parent2中的位置
+            i.second = std::find(parent2.begin(), parent2.end(),i.first) - parent2.begin();
+        }
+        for(auto& i: genes2){        // 找到在parent2中的位置
+            i.second = std::find(parent1.begin(), parent1.end(),i.first) - parent1.begin();
+        }
+        sort(genes1.begin(), genes1.end(), cmp1);
+        sort(genes2.begin(), genes2.end(), cmp1);
+
+//        for(auto i: genes1)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
+        for(int i = 0, j = 0; j != genes1.size(); ++i){
+            if(position[i] == 1){
+                parent1[i] = genes1[j].first;
+                parent2[i] = genes2[j++].first;
+            }
+        }
+        chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
+        chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
+        evaluation(child1);         // 更新child1和child2参数
+        evaluation(child2);
+        population[i] = child1.objs[0] == INT_MAX / 2 ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+        population[i + 1] = child2.objs[0] == INT_MAX / 2 ? population[i + 1] : child2;
+//        if(population[i].objs[0] == INT_MAX / 2 or population[i+1].objs[0] == INT_MAX / 2)  goto label;     // 必须生成可行解
+
+    }
+
+}
+
+void ImprovedNSGA2::mutation(vector<chromosome> &population) {
+    for(int i = 0; i < population.size(); ++i){
+        vector<int> parent = population[i].sequence;
+        // 生成位置序列（0-1）
+        int oneNum = ::rand() % (parent.size() / 2);    // 变异位置数量
+        vector<int> position(parent.size(), 0);
+        for(int i = 0; i != oneNum; ++i){
+            position[i] = 1;
+        }
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle(position.begin(), position.end(), default_random_engine(seed));   // 对四驱同类型乱序后分组
+
+        // 记录需要变异的元素
+        vector<int> genes = {};
+        for(int i = 0; i != position.size(); ++i){
+            if(position[i] == 1){
+                genes.emplace_back(parent[i]);
+            }
+        }
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle(genes.begin(), genes.end(), default_random_engine(seed));   // 对四驱同类型乱序后分组
+
+        for(int i = 0, j = 0; j != genes.size(); ++i){      // 重新放回位置
+            if(position[i] == 1){
+                parent[i] = genes[j++];
+            }
+        }
+        chromosome child = chromosome{parent, vector<double>(3, 0)};
+        evaluation(child);         // 更新child参数
+        population[i] = child.objs[0] == INT_MAX / 2 ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
+
+    }
+}
+
+
+void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
+    // TODO 写一个非支配排序
+
+}
+
 void ImprovedNSGA2::pretreatSpeedTrans(vector<int> &type2, vector<int> &type4) {
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     shuffle(type4.begin(), type4.end(), default_random_engine(seed));   // 对四驱同类型乱序后分组
@@ -290,7 +392,7 @@ void ImprovedNSGA2::pretreatSpeedTrans(vector<int> &type2, vector<int> &type4) {
     }
 
     seed = std::chrono::system_clock::now().time_since_epoch().count();
-    shuffle(type2.begin(), type2.end(), default_random_engine(seed));   // 对同类型乱序后分组
+    shuffle(type2.begin(), type2.end(), default_random_engine(seed));         // 对同类型乱序后分组
     vector<int> position(type2.size(), 0);
     for(int i = 0; i != type2.size(); ++i) position[i] = i;
 
@@ -305,4 +407,8 @@ void ImprovedNSGA2::pretreatSpeedTrans(vector<int> &type2, vector<int> &type4) {
 
 bool ImprovedNSGA2::cmp(int a, int b){
     return a > b;
+}
+
+bool ImprovedNSGA2::cmp1(pair<int, int> a, pair<int, int> b){
+    return a.second < b.second;
 }
