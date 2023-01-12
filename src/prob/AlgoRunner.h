@@ -15,6 +15,7 @@
 #include "Solution.h"
 #include <ctime>
 #include "model/Greedy.h"
+#include "model/ImprovedNSGA2.h"
 using namespace std;
 class AlgoRunner {
 public:

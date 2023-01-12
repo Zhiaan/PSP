@@ -12,6 +12,7 @@ Solution::Solution(vector<solution> s, instance i, string pathHead) {
 
 void Solution::outputCSV() {        // 输出csv
     string outputPath = outputPathHead + ins.instanceNo + ".csv";
+    cout << outputPath << endl;
     // 保证删除原有文件，重新生成结果
     std::filesystem::remove(outputPath);
 

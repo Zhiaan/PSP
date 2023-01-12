@@ -33,8 +33,9 @@ vector<solution> AlgoRunner::chooseAlgo(string algoName, instance ins) {
         solution s = gr.greedyRunner();
         result.emplace_back(s);
     }
-    else if(algoName == "NSGA2"){
-
+    else if(algoName == "INSGA2"){
+        ImprovedNSGA2 INSGA2(ins);
+        result = INSGA2.NSGA2Runner();
     }
 //    endTime = clock();
 //    double spendTime = (double)(endTime - startTime) / CLOCKS_PER_SEC;
