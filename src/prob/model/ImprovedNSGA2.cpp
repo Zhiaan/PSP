@@ -372,7 +372,17 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
 
 void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
     // TODO 写一个非支配排序
-
+    std::sort(population.begin(), population.end());
+    
+    int rank = 0;
+    int i = 0;
+    for (i = 0; i < population.size() - 1; ++i) {
+        population[i].objs[3] = rank;
+        if (population[i] < population[i + 1]) {
+        ++rank;
+        }
+    }
+    population[i].objs[3] = rank;
 }
 
 void ImprovedNSGA2::pretreatSpeedTrans(vector<int> &type2, vector<int> &type4) {
