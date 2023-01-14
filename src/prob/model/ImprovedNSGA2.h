@@ -12,7 +12,11 @@
 #include <unordered_map>
 struct chromosome{
     vector<int> sequence;
-    vector<double> objs;        // {obj1, obj2, obj3, rank}
+    vector<double> objs;        // {obj1, obj2, obj3}
+    int rank;
+    double crowding_distance;
+
+    int populationIndex;
 
     friend bool operator <(const chromosome& a, const chromosome& b) {
         bool flag = (a.objs[0] <= b.objs[0]) && (a.objs[1] <= b.objs[1]) && (a.objs[2] <= b.objs[2]);
@@ -20,11 +24,7 @@ struct chromosome{
         bool obj2_le = a.objs[1] < b.objs[1];
         bool obj3_le = a.objs[2] < b.objs[2];
         bool le = obj1_le || obj2_le || obj3_le;
-        if (le && flag) {
-            return true;
-        } else {
-            return false;
-        }
+        return le && flag;
     }
 };
 

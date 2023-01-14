@@ -75,7 +75,7 @@ void Greedy::evaluation(solution &s) {
         if(ins.cars[s.sequence[i]].speedTrans == "四驱"){
             ++speedTransCommonTime;
             if(speedTransCommonTime == 4){  // 连续四驱数量到4 将目标值设为极大值
-                s.obj1 = s.obj2 = s.obj3 = INT_MAX / 2;
+                s.obj1 = s.obj2 = s.obj3 = std::numeric_limits<double>::infinity();
                 goto label;
             }
         }
@@ -115,7 +115,7 @@ void Greedy::evaluation(solution &s) {
 
     }
     if(speedTransCommonTime == 3 and ins.cars[*(s.sequence.end()-1)].speedTrans == "四驱"){
-        s.obj1 = s.obj2 = s.obj3 = INT_MAX / 2;
+        s.obj1 = s.obj2 = s.obj3 = std::numeric_limits<double>::infinity();
         goto label;
     }
     if(ins.cars[*(s.sequence.end()-1)].roofColor != "无对比颜色" and ins.cars[*(s.sequence.end()-1)].roofColor != ins.cars[*(s.sequence.end()-1)].bodyColor){     // 最后一辆车的车顶颜色!=车身颜色

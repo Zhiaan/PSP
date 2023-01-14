@@ -26,23 +26,22 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     mutation(newPopulation);                        // 变异算子
 
     population.insert(population.end(), newPopulation.begin(), newPopulation.end());    // 老种群与新种群合并
-    cout << population.size() << endl;
 
     nondominatedSorting(population);
 
-//    cout << newPopulation.size() << endl;
-//    for(auto i: newPopulation){
-//        for(auto j: i.sequence){
-//            cout << j << ' ';
-//        }cout << endl;
-//        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << endl;
-//    }
+    for(auto i: population) {
+        // for (auto j: i.sequence) {
+        //     cout << j << ' ';
+        // } cout << endl;
+        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << ' ' << i.rank  << ' ' << i.crowding_distance << ' ' << i.populationIndex << endl << endl;
+    }
+   cout << population.size() << endl;
 
     return solutions;
 }
 
 void ImprovedNSGA2::evaluation(chromosome &c) {
-    c.objs = vector<double>(4, 0);  // 三目标值归零
+    c.objs = vector<double>(3, 0);  // 三目标值归零
     vector<int> test = c.sequence;
     sort(test.begin(), test.end());
     vector<int> examine(ins.cars.size());
@@ -64,7 +63,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         if(ins.cars[c.sequence[i]].speedTrans == "四驱"){
             ++speedTransCommonTime;
             if(speedTransCommonTime == 4){  // 连续四驱数量到4 将目标值设为极大值
-                c.objs[0] = c.objs[1] = c.objs[2] = INT_MAX / 2;
+                c.objs[0] = c.objs[1] = c.objs[2] = std::numeric_limits<double>::infinity();
                 goto label;
             }
         }
@@ -104,7 +103,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
 
     }
     if(speedTransCommonTime == 3 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
-        c.objs[0] = c.objs[1] = c.objs[2] = INT_MAX / 2;
+        c.objs[0] = c.objs[1] = c.objs[2] = std::numeric_limits<double>::infinity();
         goto label;
     }
     if(ins.cars[*(c.sequence.end()-1)].roofColor != "无对比颜色" and ins.cars[*(c.sequence.end()-1)].roofColor != ins.cars[*(c.sequence.end()-1)].bodyColor){     // 最后一辆车的车顶颜色!=车身颜色
@@ -133,7 +132,7 @@ void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
         // 计算目标值
         chro.objs = vector<double>(3, 0);
         evaluation(chro);
-        if(chro.objs[0] == INT_MAX / 2)  goto label;     // 生成可行解 不可行解重新生成
+        if(chro.objs[0] == std::numeric_limits<double>::infinity())  goto label;     // 生成可行解 不可行解重新生成
 
     }
 }
@@ -213,7 +212,7 @@ void ImprovedNSGA2::greedyObj2InitializePopulation(vector<chromosome> &populatio
                 }
             }
             evaluation(chro);
-        } while (chro.objs[0] == INT_MAX / 2);
+        } while (chro.objs[0] == std::numeric_limits<double>::infinity());
 
 //        cout << chro1.sequence.size() << endl;
 //        //    for(auto i: chro1.sequence){
@@ -327,8 +326,8 @@ void ImprovedNSGA2::cross(vector<chromosome>& population) {
         chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
         evaluation(child1);         // 更新child1和child2参数
         evaluation(child2);
-        population[i] = child1.objs[0] == INT_MAX / 2 ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
-        population[i + 1] = child2.objs[0] == INT_MAX / 2 ? population[i + 1] : child2;
+        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
 //        if(population[i].objs[0] == INT_MAX / 2 or population[i+1].objs[0] == INT_MAX / 2)  goto label;     // 必须生成可行解
 
     }
@@ -364,25 +363,84 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
         }
         chromosome child = chromosome{parent, vector<double>(3, 0)};
         evaluation(child);         // 更新child参数
-        population[i] = child.objs[0] == INT_MAX / 2 ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
+        population[i] = child.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
 
     }
 }
 
 
 void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
-    // TODO 写一个非支配排序
-    std::sort(population.begin(), population.end());
-    
-    int rank = 0;
-    int i = 0;
-    for (i = 0; i < population.size() - 1; ++i) {
-        population[i].objs[3] = rank;
-        if (population[i] < population[i + 1]) {
-        ++rank;
+    // 非支配排序
+    int populationSize = population.size();
+    for (int i = 0; i < populationSize; ++i) {
+        population[i].populationIndex = i;
+    }
+
+    vector<vector<chromosome>> fronts = {};
+    vector<chromosome> front = {};
+    vector<int> dominatingNum(populationSize, 0);
+    vector<vector<int>> dominatedSet(populationSize, vector<int>());
+    int k = 0;
+    for(int popIndex = 0; popIndex < populationSize; ++popIndex){
+        dominatingNum[popIndex] = 0;
+        for (int otherPopIndex = 0; otherPopIndex < populationSize; ++otherPopIndex) {
+            if (population[popIndex] < population[otherPopIndex]){
+                dominatedSet[popIndex].emplace_back(otherPopIndex);
+            } else if (population[otherPopIndex] < population[popIndex]){
+                dominatingNum[popIndex]++;
+            }
+        }
+
+        if(dominatingNum[popIndex] == 0){
+            population[popIndex].rank = 0;
+            front.emplace_back(population[popIndex]);
         }
     }
-    population[i].objs[3] = rank;
+    fronts.emplace_back(front);
+    int frontIndex = 0;
+    while(!fronts[frontIndex].empty()){
+        vector<chromosome> Q = {};
+        for(auto& pop: fronts[frontIndex]){
+            for(auto& otherPopIndex: dominatedSet[pop.populationIndex]){
+                --dominatingNum[otherPopIndex];
+                if(dominatingNum[otherPopIndex] == 0){
+                    population[otherPopIndex].rank = frontIndex + 1;
+                    Q.emplace_back(population[otherPopIndex]);
+                }
+            }
+        }
+        ++frontIndex;
+        fronts.emplace_back(Q);
+    }
+    fronts.pop_back();
+
+    // 计算拥挤距离
+    int objNum = population[0].objs.size();
+    for (auto &front : fronts) {
+        for (int obj_i = 0; obj_i < objNum; ++obj_i) {
+            sort(front.begin(), front.end(), [&](const chromosome &a, const chromosome &b) {
+                return a.objs[obj_i] < b.objs[obj_i];
+            });
+            double norm = (front[front.size() - 1].objs[obj_i] - front[0].objs[obj_i]);
+            front[0].crowding_distance = std::numeric_limits<double>::infinity();
+            int frontSize = front.size();
+            front[frontSize - 1].crowding_distance = std::numeric_limits<double>::infinity();
+            for (int index = 1; index < frontSize - 1; ++index) {
+                front[index].crowding_distance += (front[index + 1].objs[obj_i] - front[index - 1].objs[obj_i]) / norm;
+            }
+        }
+    }
+
+
+    population = {};
+    for(auto& front: fronts){
+        sort(front.begin(), front.end(), [](const chromosome &a, const chromosome &b) {
+            return a.crowding_distance > b.crowding_distance;
+        });
+        for(auto& p: front){
+            population.emplace_back(p);
+        }
+    }
 }
 
 void ImprovedNSGA2::pretreatSpeedTrans(vector<int> &type2, vector<int> &type4) {
