@@ -8,6 +8,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <thread>
 #include "Data.h"
 #include "../comm/Param.h"
 #include "../comm/Param.h"
@@ -21,6 +22,7 @@ class AlgoRunner {
 public:
     vector<solution> chooseAlgo(string algoName, instance i);
     void run(vector<string>&);
+    void processFile(Data &d, Param &p, IO &io, const string &filePathName, const int &threadId);
 };
 
 

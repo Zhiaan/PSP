@@ -31,6 +31,7 @@ struct instance{
     double paintingTime = 40.0; //车顶/车身涂装时间
     double paintingWaitingTime = 80.0;  // 涂装切换时间
     double assembleTime = 80.0;     // 总装时间/车
+    int threadId; // 当前处理这个 instance 的线程号，方便输出调试
 };
 
 class Data {

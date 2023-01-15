@@ -1,6 +1,6 @@
 .idea
 cmake-build-debug
-data
+data*
 .vscode
 build
 Param.cpp

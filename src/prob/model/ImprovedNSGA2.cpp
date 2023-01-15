@@ -12,7 +12,6 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) {
 }
 
 vector<solution> ImprovedNSGA2::NSGA2Runner() {
-    cout << ins.instanceNo << endl;
     vector<solution> solutions;
 
     vector<chromosome> population(populationSize);
@@ -22,7 +21,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 //    randomInitializePopulation(population);           // 随机初始化种群
 
     for(int iter = 0; iter < maxIter; ++iter){
-        cout << iter << endl;
+        printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
         vector<chromosome> newPopulation = population;      // 生成新种群
         cross(newPopulation);                           // 交叉算子
 

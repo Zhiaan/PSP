@@ -10,32 +10,33 @@ void AlgoRunner::run(vector<string>& arguments){
     vector<string> filePathList = d.getPathList(p);      // 获得所有测试实例的路径
 
     IO io;
-    for (const auto &filePath: filePathList) {
-//        string filePath = p.dataPath + "/data_103.csv";
-        instance ins = d.getInstance(filePath);
 
+    const unsigned int numThreads = std::thread::hardware_concurrency();
+    std::vector<std::thread> pool;
+    const int numFiles = filePathList.size();
+    int fileId = 0;
+    std::mutex mtx;
 
-        vector<solution> solutions = chooseAlgo(p.algoName, ins);
+    for (int threadId = 0; threadId < numThreads; ++threadId) {
+        std::thread currentThread([&](const int threadId) {
+            mtx.lock();
+            while (fileId < numFiles) {
+                string filePath = filePathList[fileId];
+                ++fileId;
+                mtx.unlock();
 
-        // 结果分别输出
-        Solution sol(solutions, ins, p.outputPath);
-        sol.outputCSV();
+                printf("thread id %d, file name %s\n", threadId, filePath.c_str());
+                processFile(d, p, io, filePath, threadId);
 
-        // 结果总输出
-        string statisticsPath = p.outputPath + "statistics.csv";
-        cout << statisticsPath << endl;
-        double avg1 = 0, avg2 = 0, avg3 = 0;
-        double sum1 = 0, sum2 = 0, sum3 = 0;
-        for(auto& s: solutions){
-            sum1 += s.obj1;
-            sum2 += s.obj2;
-            sum3 += s.obj3;
-        }
-        avg1 = sum1 / solutions.size();
-        avg2 = sum2 / solutions.size();
-        avg3 = sum3 / solutions.size();
-        string outputSolution = ins.instanceNo + "," + to_string(avg1) + "," + to_string(avg2) + "," + to_string(avg3) ;
-        io.writeCSV(statisticsPath, outputSolution);
+                mtx.lock();
+            }
+            mtx.unlock();
+        }, threadId);
+        pool.push_back(std::move(currentThread));
+    } 
+
+    for (auto& t : pool) {
+        t.join();
     }
 }
 
@@ -57,4 +58,32 @@ vector<solution> AlgoRunner::chooseAlgo(string algoName, instance ins) {
 //    double spendTime = (double)(endTime - startTime) / CLOCKS_PER_SEC;
 //    s.time = spendTime;
     return result;
+}
+
+void AlgoRunner::processFile(Data &d, Param &p, IO &io, const string &filePathName, const int &threadId) {
+//  string filePath = p.dataPath + "/data_103.csv";
+    instance ins = d.getInstance(filePathName);
+    ins.threadId = threadId;
+
+    vector<solution> solutions = chooseAlgo(p.algoName, ins);
+
+    // 结果分别输出
+    Solution sol(solutions, ins, p.outputPath);
+    sol.outputCSV();
+
+    // 结果总输出
+    string statisticsPath = p.outputPath + "statistics.csv";
+    cout << statisticsPath << endl;
+    double avg1 = 0, avg2 = 0, avg3 = 0;
+    double sum1 = 0, sum2 = 0, sum3 = 0;
+    for(auto& s: solutions){
+        sum1 += s.obj1;
+        sum2 += s.obj2;
+        sum3 += s.obj3;
+    }
+    avg1 = sum1 / solutions.size();
+    avg2 = sum2 / solutions.size();
+    avg3 = sum3 / solutions.size();
+    string outputSolution = ins.instanceNo + "," + to_string(avg1) + "," + to_string(avg2) + "," + to_string(avg3) ;
+    io.writeCSV(statisticsPath, outputSolution);
 }
