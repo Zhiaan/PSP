@@ -9,18 +9,34 @@ void AlgoRunner::run(vector<string>& arguments){
     Data d;
     vector<string> filePathList = d.getPathList(p);      // 获得所有测试实例的路径
 
-//    for (const auto &filePath: filePathList) {
-// TODO 先处理一个测试实例
-        string filePath = p.dataPath + "/data_103.csv";
-        cout << filePath << endl;
+    IO io;
+    for (const auto &filePath: filePathList) {
+//        string filePath = p.dataPath + "/data_103.csv";
         instance ins = d.getInstance(filePath);
+
 
         vector<solution> solutions = chooseAlgo(p.algoName, ins);
 
-        // 结果输出
+        // 结果分别输出
         Solution sol(solutions, ins, p.outputPath);
         sol.outputCSV();
-//    }
+
+        // 结果总输出
+        string statisticsPath = p.outputPath + "statistics.csv";
+        cout << statisticsPath << endl;
+        double avg1 = 0, avg2 = 0, avg3 = 0;
+        double sum1 = 0, sum2 = 0, sum3 = 0;
+        for(auto& s: solutions){
+            sum1 += s.obj1;
+            sum2 += s.obj2;
+            sum3 += s.obj3;
+        }
+        avg1 = sum1 / solutions.size();
+        avg2 = sum2 / solutions.size();
+        avg3 = sum3 / solutions.size();
+        string outputSolution = ins.instanceNo + "," + to_string(avg1) + "," + to_string(avg2) + "," + to_string(avg3) ;
+        io.writeCSV(statisticsPath, outputSolution);
+    }
 }
 
 vector<solution> AlgoRunner::chooseAlgo(string algoName, instance ins) {

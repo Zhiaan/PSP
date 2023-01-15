@@ -8,34 +8,49 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
     populationSize = 500;
     chromosomeLength = ins.cars.size();
+    maxIter = 1000;
 }
 
 vector<solution> ImprovedNSGA2::NSGA2Runner() {
+    cout << ins.instanceNo << endl;
     vector<solution> solutions;
 
     vector<chromosome> population(populationSize);
-//    vector<chromosome> population(1);
 
     // 生成初始解
     greedyObj2InitializePopulation(population);     // obj2贪婪算法初始化种群
 //    randomInitializePopulation(population);           // 随机初始化种群
 
-    vector<chromosome> newPopulation = population;      // 生成新种群
-    cross(newPopulation);                           // 交叉算子
+    for(int iter = 0; iter < maxIter; ++iter){
+        cout << iter << endl;
+        vector<chromosome> newPopulation = population;      // 生成新种群
+        cross(newPopulation);                           // 交叉算子
 
-    mutation(newPopulation);                        // 变异算子
+        mutation(newPopulation);                        // 变异算子
 
-    population.insert(population.end(), newPopulation.begin(), newPopulation.end());    // 老种群与新种群合并
+        newPopulation.insert(newPopulation.end(), population.begin(), population.end());    // 老种群与新种群合并
 
-    nondominatedSorting(population);
+        nondominatedSorting(newPopulation);     // 非支配排序
+
+        population.clear();
+        population.insert(population.begin(), newPopulation.begin(), newPopulation.begin() + populationSize);
+
+    }
 
     for(auto i: population) {
+        solution s;
+        s.sequence = i.sequence;
+        s.obj1 = i.objs[0];
+        s.obj2 = i.objs[1];
+        s.obj3 = i.objs[2];
+        solutions.emplace_back(s);
+        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << ' ' << i.rank  << ' ' << i.crowding_distance  << endl;
+        if(i.rank != 0 or solutions.size() == 50) break;
         // for (auto j: i.sequence) {
         //     cout << j << ' ';
         // } cout << endl;
-        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << ' ' << i.rank  << ' ' << i.crowding_distance << ' ' << i.populationIndex << endl << endl;
     }
-   cout << population.size() << endl;
+    cout << population.size() << ' ' << solutions.size() <<  endl;
 
     return solutions;
 }
@@ -368,12 +383,14 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
     }
 }
 
-
 void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
     // 非支配排序
+
     int populationSize = population.size();
     for (int i = 0; i < populationSize; ++i) {
         population[i].populationIndex = i;
+        population[i].crowding_distance = 0;
+        population[i].rank = 0;
     }
 
     vector<vector<chromosome>> fronts = {};
@@ -422,11 +439,13 @@ void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
                 return a.objs[obj_i] < b.objs[obj_i];
             });
             double norm = (front[front.size() - 1].objs[obj_i] - front[0].objs[obj_i]);
-            front[0].crowding_distance = std::numeric_limits<double>::infinity();
-            int frontSize = front.size();
-            front[frontSize - 1].crowding_distance = std::numeric_limits<double>::infinity();
-            for (int index = 1; index < frontSize - 1; ++index) {
-                front[index].crowding_distance += (front[index + 1].objs[obj_i] - front[index - 1].objs[obj_i]) / norm;
+            if(norm != 0){
+                front[0].crowding_distance = std::numeric_limits<double>::infinity();
+                int frontSize = front.size();
+                front[frontSize - 1].crowding_distance = std::numeric_limits<double>::infinity();
+                for (int index = 1; index < frontSize - 1; ++index) {
+                    front[index].crowding_distance += (front[index + 1].objs[obj_i] - front[index - 1].objs[obj_i]) / norm;
+                }
             }
         }
     }

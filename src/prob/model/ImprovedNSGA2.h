@@ -10,6 +10,7 @@
 #include "../Solution.h"
 #include "Greedy.h"
 #include <unordered_map>
+#include "cmath"
 struct chromosome{
     vector<int> sequence;
     vector<double> objs;        // {obj1, obj2, obj3}
@@ -34,6 +35,7 @@ public:
     ImprovedNSGA2(instance);
     int populationSize;     // 种群大小 500/1000
     int chromosomeLength;   // 染色体长度/基因数量
+    int maxIter;        // 最大迭代次数
     static bool cmp(int a, int b);
     static bool cmp1(pair<int, int> a, pair<int, int> b);
 private:
