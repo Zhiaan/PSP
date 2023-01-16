@@ -9,7 +9,7 @@ path = "/Users/l/PSP/result/INSGA2/"
 workbook = openpyxl.Workbook()
 
 namelist = sorted(os.listdir(path))
-# namelist.sort(key=lambda f: int(re.sub('\D', '', f)))
+namelist.sort(key=lambda f: int(re.sub('\D', '', f)))
 
 # namelist = ['data_2722.csv']
 
