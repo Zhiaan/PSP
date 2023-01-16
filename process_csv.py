@@ -3,13 +3,12 @@ import pandas as pd
 import re
 import csv
 import openpyxl
-path = "/Users/l/PSP/result/INSGA2/"
+path = "./result/INSGA2/"
 
 # 打开一个新的 Excel 文件
 workbook = openpyxl.Workbook()
 
-namelist = sorted(os.listdir(path))
-namelist.sort(key=lambda f: int(re.sub('\D', '', f)))
+namelist = sorted(os.listdir(path), key=lambda f: int(re.sub('\D', '', f)))
 
 # namelist = ['data_2722.csv']
 
@@ -25,4 +24,5 @@ for file_name in namelist:
             sheet.append(row)
 
 # 保存 Excel 文件
-workbook.save('result.xlsx')
+workbook.save('./result/result.xlsx')
+print('OK!')
