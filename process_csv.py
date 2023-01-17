@@ -1,41 +1,42 @@
 import os
 import pandas as pd
 import re
-import csv
 import openpyxl
-from openpyxl.styles import Font
 from glob import glob
-path = './result/INSGA2'
+
+data_path = './result/INSGA2'
+example_path = './result/example.xlsx'
+save_path = './result/作品上传示例.xlsx'
 
 # 打开一个新的 Excel 文件
-workbook = openpyxl.Workbook()
+workbook = openpyxl.load_workbook(example_path)
 
-namelist = sorted(glob(os.path.join(path, 'data_*.csv')), key=lambda f: int(re.sub('\D', '', f)))
-# namelist = ['data_2722.csv']
+namelist = sorted(glob(os.path.join(data_path, 'data_*.csv')), key=lambda f: int(re.sub('\D', '', f)))
+# namelist = ['./result/INSGA2/data_130.csv']
 
 for file_name in namelist:
     instanceNo = file_name.split('/')[-1][:-4]
     print(instanceNo)
     with open(file_name, 'r', encoding='utf-8') as csvfile:
-        sheet = workbook.create_sheet(instanceNo)
+        sheet = workbook[instanceNo]
         # 读取 csv 文件中的数据
-        reader = csv.reader(csvfile)
+        csv = pd.read_csv(csvfile, dtype=int)
+        rows_num = csv.shape[0]
+        cols_num = csv.shape[1]
 
-        carNum = 0
-        # 将数据写入 sheet1
-        for row in reader:
-            sheet.append(row)
-            carNum = len(row) - 3
-        for j in range(1, carNum + 4):
-            cell = sheet.cell(row=1, column=j)
-            cell.font = Font(name="等线 (正文)", size=11)
-        for i in range(2, 52):
-            for j in range(1, carNum + 4):
-                cell = sheet.cell(row=i, column=j)
-                cell.data_type = "int"
-                cell.font = Font(name="等线 (正文)", size=11)
+        if rows_num < 50:
+            sheet.delete_rows(rows_num + 2, 52)
 
-del workbook["Sheet"]
+        for i in range(0, rows_num):
+            for j in range(0, cols_num):
+                sheet.cell(i + 2, j + 1).value = csv.iloc[i, j]
+
 # 保存 Excel 文件
-workbook.save('./result/result.xlsx')
+workbook.save(save_path)
+workbook.close()
+
+# for check, compare csv
+# ok = pd.read_excel('result_save.xlsx')
+# ok.to_csv('result_save.csv', index=None, header=True)
+
 print('OK!')
