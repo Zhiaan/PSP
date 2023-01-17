@@ -25,7 +25,7 @@ cmake ..
 Host p100
 	HostName 114.212.134.157
 	User zhiaan
-	IdentityFile ~/.ssh/p100
+	IdentityFile ~/.ssh/PSP
 ```
 
 ### 传输文件
