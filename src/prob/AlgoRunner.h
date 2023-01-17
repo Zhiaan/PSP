@@ -17,6 +17,7 @@
 #include <ctime>
 #include "model/Greedy.h"
 #include "model/ImprovedNSGA2.h"
+#include <mutex>
 using namespace std;
 class AlgoRunner {
 public:

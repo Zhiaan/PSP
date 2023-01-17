@@ -11,6 +11,7 @@
 #include "Greedy.h"
 #include <unordered_map>
 #include "cmath"
+#include <chrono>
 struct chromosome{
     vector<int> sequence;
     vector<double> objs;        // {obj1, obj2, obj3}

@@ -14,7 +14,7 @@ void Solution::outputCSV() {        // 输出csv
     string outputPath = outputPathHead + ins.instanceNo + ".csv";
 
     // 保证删除原有文件，重新生成结果
-    std::filesystem::remove(outputPath);
+    // std::filesystem::remove(outputPath);
 
     IO io;
     string head = "";

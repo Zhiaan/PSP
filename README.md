@@ -4,6 +4,15 @@
 
 [如何使用 Git 提交更新内容](./how-to-commit.md)
 
+## Run
+
+```
+cd PSP
+mkdir build && cd build
+cmake ..
+./PSP
+```
+
 ## SSH
 
 ### 配置免密登陆
