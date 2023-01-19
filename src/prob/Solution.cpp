@@ -28,7 +28,7 @@ void Solution::outputCSV() {        // 输出csv
     for(auto solution: outputResult){
         string outputSolution = "";
         for(auto index: solution.sequence){
-            outputSolution += to_string(index + 1) + ",";
+            outputSolution += to_string(index) + ",";
         }
         outputSolution += to_string(solution.obj1) + "," + to_string(solution.obj2) + "," + to_string(solution.obj3);
         io.writeCSV(outputPath, outputSolution);
