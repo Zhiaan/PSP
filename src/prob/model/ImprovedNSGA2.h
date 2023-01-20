@@ -60,6 +60,7 @@ private:
     void cross(vector<chromosome>& population);
     void mutation(vector<chromosome>& population);
     void nondominatedSorting(vector<chromosome>& population);
+    void computeCrowdingDistance(vector<chromosome> &population, vector<vector<chromosome>> &fronts);
 };
 
 

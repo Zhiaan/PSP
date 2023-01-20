@@ -384,8 +384,6 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
 
 void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
     // 非支配排序
-
-    int populationSize = population.size();
     for (int i = 0; i < populationSize; ++i) {
         population[i].populationIndex = i;
         population[i].crowding_distance = 0;
@@ -430,9 +428,22 @@ void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
     }
     fronts.pop_back();
 
+    computeCrowdingDistance(population, fronts);
+}
+
+void ImprovedNSGA2::computeCrowdingDistance(vector<chromosome> &population, vector<vector<chromosome>> &fronts) {
     // 计算拥挤距离
-    int objNum = population[0].objs.size();
+    const int objNum = population[0].objs.size();
+    const int needSize = populationSize / 2;
+    int sortedSize = 0;
     for (auto &front : fronts) {
+        sortedSize += front.size();
+        if (sortedSize < needSize) {
+            continue;
+        }
+        if (sortedSize == needSize) {
+            break;
+        }
         for (int obj_i = 0; obj_i < objNum; ++obj_i) {
             sort(front.begin(), front.end(), [&](const chromosome &a, const chromosome &b) {
                 return a.objs[obj_i] < b.objs[obj_i];
@@ -447,8 +458,8 @@ void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
                 }
             }
         }
+        break;
     }
-
 
     population = {};
     for(auto& front: fronts){
