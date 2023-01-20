@@ -384,6 +384,7 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
 
 void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
     // 非支配排序
+    const int populationSize = population.size();
     for (int i = 0; i < populationSize; ++i) {
         population[i].populationIndex = i;
         population[i].crowding_distance = 0;
@@ -433,6 +434,7 @@ void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
 
 void ImprovedNSGA2::computeCrowdingDistance(vector<chromosome> &population, vector<vector<chromosome>> &fronts) {
     // 计算拥挤距离
+    const int populationSize = population.size();
     const int objNum = population[0].objs.size();
     const int needSize = populationSize / 2;
     int sortedSize = 0;
