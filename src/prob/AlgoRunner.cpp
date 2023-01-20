@@ -11,9 +11,11 @@ void AlgoRunner::run(vector<string>& arguments){
 
     IO io;
 
-    const unsigned int numThreads = std::thread::hardware_concurrency();
+    const unsigned int numThreads = std::thread::hardware_concurrency() / 2;
+//    const unsigned int numThreads = 1;
     std::vector<std::thread> pool;
     const int numFiles = filePathList.size();
+//    const int numFiles = 1;
     int fileId = 0;
     std::mutex mtx;
 
@@ -22,6 +24,7 @@ void AlgoRunner::run(vector<string>& arguments){
             mtx.lock();
             while (fileId < numFiles) {
                 string filePath = filePathList[fileId];
+//                string filePath = p.dataPath + "/data_103.csv";
                 ++fileId;
                 mtx.unlock();
 

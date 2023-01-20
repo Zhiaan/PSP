@@ -23,7 +23,9 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     for(int iter = 0; iter < maxIter; ++iter){
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
         vector<chromosome> newPopulation = population;      // 生成新种群
-        cross(newPopulation);                           // 交叉算子
+//        cross(newPopulation);                           // 交叉算子
+
+        particallyMappedCross(population);             // PMX交叉
 
         mutation(newPopulation);                        // 变异算子
 
@@ -37,6 +39,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     }
 
     for(auto i: population) {
+        if(i.rank != 0 or solutions.size() == 50) break;
         solution s;
         s.sequence = i.sequence;
         s.obj1 = i.objs[0];
@@ -44,7 +47,6 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         s.obj3 = i.objs[2];
         solutions.emplace_back(s);
         cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << ' ' << i.rank  << ' ' << i.crowding_distance  << endl;
-        if(i.rank != 0 or solutions.size() == 50) break;
         // for (auto j: i.sequence) {
         //     cout << j << ' ';
         // } cout << endl;
@@ -301,51 +303,123 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 
 void ImprovedNSGA2::cross(vector<chromosome>& population) {
     for(int i = 0; i < population.size(); i += 2){
+        int flag = 0;
+        ++flag;
         vector<int> parent1 = population[i].sequence;
         vector<int> parent2 = population[i+1].sequence;
+
+        if(parent1 == parent2){
+            evaluation(population[i]);
+            evaluation(population[i+1]);
+            continue;
+        }
         // 生成位置序列（0-1）
         vector<int> position(parent1.size(), 0);
 
         // 记录需要换顺序的元素
         vector<pair<int, int>> genes1 = {};
         vector<pair<int, int>> genes2 = {};
-        for(int i = 0; i != position.size(); ++i){
-            position[i] = ::rand() % 2;
-            if(position[i] == 1){
-                genes1.emplace_back(pair<int, int>{parent1[i], 0});
-                genes2.emplace_back(pair<int, int>{parent2[i], 0});
+        for(int j = 0; j != position.size(); ++j){
+            position[j] = ::rand() % 2;
+            if(position[j] == 1){
+                genes1.emplace_back(pair<int, int>{parent1[j], 0});
+                genes2.emplace_back(pair<int, int>{parent2[j], 0});
             }
         }
 
 //        for(auto i: genes1)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
 //        for(auto i: genes2)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
 
-        for(auto& i: genes1){        // 找到在parent2中的位置
-            i.second = std::find(parent2.begin(), parent2.end(),i.first) - parent2.begin();
+        for(auto& j: genes1){        // 找到在parent2中的位置
+            j.second = std::find(parent2.begin(), parent2.end(),j.first) - parent2.begin();
         }
-        for(auto& i: genes2){        // 找到在parent2中的位置
-            i.second = std::find(parent1.begin(), parent1.end(),i.first) - parent1.begin();
+        for(auto& j: genes2){        // 找到在parent2中的位置
+            j.second = std::find(parent1.begin(), parent1.end(),j.first) - parent1.begin();
         }
         sort(genes1.begin(), genes1.end(), cmp1);
         sort(genes2.begin(), genes2.end(), cmp1);
 
 //        for(auto i: genes1)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
-        for(int i = 0, j = 0; j != genes1.size(); ++i){
-            if(position[i] == 1){
-                parent1[i] = genes1[j].first;
-                parent2[i] = genes2[j++].first;
+        for(int k = 0, j = 0; j != genes1.size(); ++k){
+            if(position[k] == 1){
+                parent1[k] = genes1[j].first;
+                parent2[k] = genes2[j++].first;
             }
         }
-        chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
-        chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
-        evaluation(child1);         // 更新child1和child2参数
-        evaluation(child2);
-        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
-        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
-//        if(population[i].objs[0] == INT_MAX / 2 or population[i+1].objs[0] == INT_MAX / 2)  goto label;     // 必须生成可行解
+//        chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
+//        chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
+//        evaluation(child1);         // 更新child1和child2参数
+//        evaluation(child2);
 
+//        if((child1.objs[0] == std::numeric_limits<double>::infinity() or child2.objs[0] == std::numeric_limits<double>::infinity()) and flag < 20)  goto label;     // 必须生成可行解
+//
+//        label:
+//        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+//        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
+
+        population[i].sequence = parent1;
+        population[i + 1].sequence = parent2;
     }
+}
 
+void ImprovedNSGA2::particallyMappedCross(vector<chromosome>& population){
+    for(int i = 0; i < 2; i += 2){
+
+        vector<int> parent1 = population[i].sequence;
+        vector<int> parent2 = population[i+1].sequence;
+
+        if(parent1 == parent2) {
+            evaluation(population[i]);
+            evaluation(population[i + 1]);
+            continue;
+        }
+
+        // 生成分段位置 交换位置[index1, index2)
+        int index1 = ::rand() % parent1.size();
+        int index2 = ::rand() % parent1.size();
+        if(index1 > index2) swap(index1, index2);
+
+        unordered_map<int, int> map1, map2;         // 记录配对
+        vector<int> r1(parent1.size(), 0);
+        vector<int> r2(parent2.size(), 0);
+        for(int j = index1; j != index2; ++j){
+
+            map1.insert(pair<int, int>{parent1[j], parent2[j]});
+            map2.insert(pair<int, int>{parent2[j], parent1[j]});
+            swap(parent1[j], parent2[j]);
+            r1[parent1[j]] = 1;
+            r2[parent2[j]] = 1;
+        }
+        for(int j = 0; j != parent1.size(); ++j){
+            if(j >= index1 and j < index2)  continue;
+            if(r1[parent1[j]] != 0){
+                int key = parent1[j];
+                while(r1[map2[key]] == 1){
+                    key = map2[key];
+                }
+                parent1[j] = map2[key];
+            }
+            if(r2[parent2[j]] != 0){
+                int key = parent2[j];
+                while(r2[map1[key]] == 1){
+                    key = map1[key];
+                }
+                parent2[j] = map1[key];
+            }
+        }
+//        chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
+//        chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
+//        evaluation(child1);         // 更新child1和child2参数
+//        evaluation(child2);
+
+//        if((child1.objs[0] == std::numeric_limits<double>::infinity() or child2.objs[0] == std::numeric_limits<double>::infinity()))  goto label;     // 必须生成可行解
+
+//        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+//        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
+
+        population[i].sequence = parent1;
+        population[i + 1].sequence = parent2;
+    }
 }
 
 void ImprovedNSGA2::mutation(vector<chromosome> &population) {
@@ -375,10 +449,11 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
                 parent[i] = genes[j++];
             }
         }
-        chromosome child = chromosome{parent, vector<double>(3, 0)};
-        evaluation(child);         // 更新child参数
-        population[i] = child.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
-
+//        chromosome child = chromosome{parent, vector<double>(3, 0)};
+//        evaluation(child);         // 更新child参数
+//        population[i] = child.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
+        population[i].sequence = parent;
+        evaluation(population[i]);         // 更新child参数
     }
 }
 
