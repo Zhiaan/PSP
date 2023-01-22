@@ -25,7 +25,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         vector<chromosome> newPopulation = population;      // 生成新种群
 //        cross(newPopulation);                           // 交叉算子
 
-        particallyMappedCross(population);             // PMX交叉
+        particallyMappedCross(newPopulation);             // PMX交叉
 
         mutation(newPopulation);                        // 变异算子
 
