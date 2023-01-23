@@ -422,10 +422,86 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population, int& iter) {
     }
 }
 
+// void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
+//     // 非支配排序
+//     for (int i = 0; i < populationSize; ++i) {
+//         population[i].populationIndex = i;
+//         population[i].crowding_distance = 0;
+//         population[i].rank = 0;
+//     }
+
+//     vector<vector<chromosome>> fronts = {};
+//     vector<chromosome> front = {};
+//     vector<int> dominatingNum(populationSize, 0);
+//     vector<vector<int>> dominatedSet(populationSize, vector<int>());
+//     int k = 0;
+//     for(int popIndex = 0; popIndex < populationSize; ++popIndex){
+//         dominatingNum[popIndex] = 0;
+//         for (int otherPopIndex = 0; otherPopIndex < populationSize; ++otherPopIndex) {
+//             if (population[popIndex] < population[otherPopIndex]){
+//                 dominatedSet[popIndex].emplace_back(otherPopIndex);
+//             } else if (population[otherPopIndex] < population[popIndex]){
+//                 dominatingNum[popIndex]++;
+//             }
+//         }
+
+//         if(dominatingNum[popIndex] == 0){
+//             population[popIndex].rank = 0;
+//             front.emplace_back(population[popIndex]);
+//         }
+//     }
+//     fronts.emplace_back(front);
+//     int frontIndex = 0;
+//     while(!fronts[frontIndex].empty()){
+//         vector<chromosome> Q = {};
+//         for(auto& pop: fronts[frontIndex]){
+//             for(auto& otherPopIndex: dominatedSet[pop.populationIndex]){
+//                 --dominatingNum[otherPopIndex];
+//                 if(dominatingNum[otherPopIndex] == 0){
+//                     population[otherPopIndex].rank = frontIndex + 1;
+//                     Q.emplace_back(population[otherPopIndex]);
+//                 }
+//             }
+//         }
+//         ++frontIndex;
+//         fronts.emplace_back(Q);
+//     }
+//     fronts.pop_back();
+
+//     // 计算拥挤距离
+//     int objNum = population[0].objs.size();
+//     for (auto &front : fronts) {
+//         for (int obj_i = 0; obj_i < objNum; ++obj_i) {
+//             sort(front.begin(), front.end(), [&](const chromosome &a, const chromosome &b) {
+//                 return a.objs[obj_i] < b.objs[obj_i];
+//             });
+//             double norm = (front[front.size() - 1].objs[obj_i] - front[0].objs[obj_i]);
+//             if(norm != 0){
+//                 front[0].crowding_distance = std::numeric_limits<double>::infinity();
+//                 int frontSize = front.size();
+//                 front[frontSize - 1].crowding_distance = std::numeric_limits<double>::infinity();
+//                 for (int index = 1; index < frontSize - 1; ++index) {
+//                     front[index].crowding_distance += (front[index + 1].objs[obj_i] - front[index - 1].objs[obj_i]) / norm;
+//                 }
+//             }
+//         }
+//     }
+
+
+//     population = {};
+//     for(auto& front: fronts){
+//         sort(front.begin(), front.end(), [](const chromosome &a, const chromosome &b) {
+//             return a.crowding_distance > b.crowding_distance;
+//         });
+//         for(auto& p: front){
+//             population.emplace_back(p);
+//         }
+//     }
+// }
+
 void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
     // 非支配排序
-
-    int populationSize = population.size();
+    const int populationSize = population.size();
     for (int i = 0; i < populationSize; ++i) {
         population[i].populationIndex = i;
         population[i].crowding_distance = 0;
@@ -470,9 +546,23 @@ void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
     }
     fronts.pop_back();
 
+    computeCrowdingDistance(population, fronts);
+}
+
+void ImprovedNSGA2::computeCrowdingDistance(vector<chromosome> &population, vector<vector<chromosome>> &fronts) {
     // 计算拥挤距离
-    int objNum = population[0].objs.size();
+    const int populationSize = population.size();
+    const int objNum = population[0].objs.size();
+    const int needSize = populationSize / 2;
+    int sortedSize = 0;
     for (auto &front : fronts) {
+        sortedSize += front.size();
+        if (sortedSize < needSize) {
+            continue;
+        }
+        if (sortedSize == needSize) {
+            break;
+        }
         for (int obj_i = 0; obj_i < objNum; ++obj_i) {
             sort(front.begin(), front.end(), [&](const chromosome &a, const chromosome &b) {
                 return a.objs[obj_i] < b.objs[obj_i];
@@ -487,8 +577,8 @@ void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
                 }
             }
         }
+        break;
     }
-
 
     population = {};
     for(auto& front: fronts){

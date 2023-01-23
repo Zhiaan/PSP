@@ -20,12 +20,23 @@ struct chromosome{
     int populationIndex;
 
     friend bool operator <(const chromosome& a, const chromosome& b) {
-        bool flag = (a.objs[0] <= b.objs[0]) && (a.objs[1] <= b.objs[1]) && (a.objs[2] <= b.objs[2]);
-        bool obj1_le = a.objs[0] < b.objs[0];
-        bool obj2_le = a.objs[1] < b.objs[1];
-        bool obj3_le = a.objs[2] < b.objs[2];
-        bool le = obj1_le || obj2_le || obj3_le;
-        return le && flag;
+        // 判断所有 objs <=
+        bool flag_1 = true;
+        for (int i = 0; i < a.objs.size(); ++i) {
+            if (a.objs[i] > b.objs[i]) {
+                flag_1 = false;
+                break;
+            }
+        }
+        // 判断存在 objs <
+        bool flag_2 = false;
+        for (int i = 0; i < a.objs.size(); ++i) {
+            if (a.objs[i] < b.objs[i]) {
+                flag_2 = true;
+                break;
+            }
+        }
+        return flag_1 && flag_2;
     }
 };
 
@@ -48,6 +59,7 @@ private:
     void cross(vector<chromosome>& population, int& iter);
     void mutation(vector<chromosome>& population, int& iter);
     void nondominatedSorting(vector<chromosome>& population);
+    void computeCrowdingDistance(vector<chromosome> &population, vector<vector<chromosome>> &fronts);
 };
 
 
