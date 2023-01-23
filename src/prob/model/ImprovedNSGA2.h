@@ -5,10 +5,9 @@
 #ifndef PSP_IMPROVEDNSGA2_H
 #define PSP_IMPROVEDNSGA2_H
 #include "../Data.h"
+#include "../Solution.h"
 #include <iostream>
 #include <algorithm>
-#include "../Solution.h"
-#include "Greedy.h"
 #include <unordered_map>
 #include "cmath"
 #include <chrono>
@@ -46,8 +45,8 @@ private:
     void pretreatSpeedTrans(vector<int>& type2, vector<int>& type4);
     void greedyObj2InitializePopulation(vector<chromosome> &population);
     void greedyObj1InitializePopulation(vector<chromosome> &population);
-    void cross(vector<chromosome>& population);
-    void mutation(vector<chromosome>& population);
+    void cross(vector<chromosome>& population, int& iter);
+    void mutation(vector<chromosome>& population, int& iter);
     void nondominatedSorting(vector<chromosome>& population);
 };
 

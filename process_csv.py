@@ -4,7 +4,7 @@ import re
 import openpyxl
 from glob import glob
 
-data_path = './result/INSGA2'
+data_path = './result/Obj1Greedy'
 example_path = './result/example.xlsx'
 save_path = './result/作品上传示例.xlsx'
 

@@ -12,8 +12,10 @@ void AlgoRunner::run(vector<string>& arguments){
     IO io;
 
     const unsigned int numThreads = std::thread::hardware_concurrency();
+//    const unsigned int numThreads = 1;
     std::vector<std::thread> pool;
     const int numFiles = filePathList.size();
+//    const int numFiles = 1;
     int fileId = 0;
     std::mutex mtx;
 
@@ -22,6 +24,7 @@ void AlgoRunner::run(vector<string>& arguments){
             mtx.lock();
             while (fileId < numFiles) {
                 string filePath = filePathList[fileId];
+//                string filePath = p.dataPath + "/data_103.csv";
                 ++fileId;
                 mtx.unlock();
 
@@ -54,6 +57,10 @@ vector<solution> AlgoRunner::chooseAlgo(string algoName, instance ins) {
         ImprovedNSGA2 INSGA2(ins);
         result = INSGA2.NSGA2Runner();
     }
+    else if(algoName == "Obj1Greedy"){
+        Obj1Greedy og(ins);
+        result = og.Obj1GreedyRunner();
+    }
 //    endTime = clock();
 //    double spendTime = (double)(endTime - startTime) / CLOCKS_PER_SEC;
 //    s.time = spendTime;
@@ -66,24 +73,28 @@ void AlgoRunner::processFile(Data &d, Param &p, IO &io, const string &filePathNa
     ins.threadId = threadId;
 
     vector<solution> solutions = chooseAlgo(p.algoName, ins);
-
     // 结果分别输出
     Solution sol(solutions, ins, p.outputPath);
     sol.outputCSV();
 
     // 结果总输出
     string statisticsPath = p.outputPath + "statistics.csv";
-    cout << statisticsPath << endl;
-    double avg1 = 0, avg2 = 0, avg3 = 0;
-    double sum1 = 0, sum2 = 0, sum3 = 0;
+    //    double avg1 = 0, avg2 = 0, avg3 = 0;
+//    double sum1 = 0, sum2 = 0, sum3 = 0;
+//    for(auto& s: solutions){
+//        sum1 += s.obj1;
+//        sum2 += s.obj2;
+//        sum3 += s.obj3;
+//    }
+//    avg1 = sum1 / solutions.size();
+//    avg2 = sum2 / solutions.size();
+//    avg3 = sum3 / solutions.size();
+    string outputSolution;
     for(auto& s: solutions){
-        sum1 += s.obj1;
-        sum2 += s.obj2;
-        sum3 += s.obj3;
+        if(s.obj1 == 0){
+            outputSolution = ins.instanceNo + "," + to_string(s.obj1) + "," + to_string(s.obj2) + "," + to_string(s.obj3);
+            break;
+        }
     }
-    avg1 = sum1 / solutions.size();
-    avg2 = sum2 / solutions.size();
-    avg3 = sum3 / solutions.size();
-    string outputSolution = ins.instanceNo + "," + to_string(avg1) + "," + to_string(avg2) + "," + to_string(avg3) ;
     io.writeCSV(statisticsPath, outputSolution);
 }
