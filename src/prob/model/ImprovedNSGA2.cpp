@@ -152,7 +152,7 @@ void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
 }
 
 void ImprovedNSGA2::greedyObj2InitializePopulation(vector<chromosome> &population){
-    string filePath = "/Users/l/PSP/result/Obj1Greedy/" + ins.instanceNo + ".csv";
+    string filePath = "../result/Obj1Greedy/" + ins.instanceNo + ".csv";
     // TODO 地址
     IO io;
     vector<vector<string>> greedySolution = io.readCSV(filePath);

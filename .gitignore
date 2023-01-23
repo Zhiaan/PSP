@@ -4,5 +4,4 @@ data*
 .vscode
 build
 Param.cpp
-result/INSGA2
-result/*.xlsx
+result
