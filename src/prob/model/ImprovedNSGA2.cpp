@@ -23,9 +23,9 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     for(int iter = 0; iter < maxIter; ++iter){
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
         vector<chromosome> newPopulation = population;      // 生成新种群
-        cross(newPopulation, iter);                           // 交叉算子
+        cross(newPopulation);                           // 交叉算子
 
-        mutation(newPopulation, iter);                        // 变异算子
+        mutation(newPopulation);                        // 变异算子
 
         newPopulation.insert(newPopulation.end(), population.begin(), population.end());    // 老种群与新种群合并
 
@@ -314,25 +314,20 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 
 }
 
-void ImprovedNSGA2::cross(vector<chromosome>& population, int& iter) {
+void ImprovedNSGA2::cross(vector<chromosome>& population) {
     for(int i = 0; i < population.size(); i += 2){
         vector<int> parent1 = population[i].sequence;
         vector<int> parent2 = population[i+1].sequence;
 
         if(parent1 == parent2){
-           if(iter < maxIter / 3){
-                chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
-                chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
-                evaluation(child1);         // 更新child1和child2参数
-                evaluation(child2);
-                population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
-                population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
-           }
-           else{
-               population[i].sequence = parent1;
-               population[i + 1].sequence = parent2;
-           }
-           continue;
+            chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
+            chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
+            evaluation(child1);         // 更新child1和child2参数
+            evaluation(child2);
+            population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+            population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
+
+            continue;
         }
 
         // 生成位置序列（0-1）
@@ -369,18 +364,13 @@ void ImprovedNSGA2::cross(vector<chromosome>& population, int& iter) {
             }
         }
 
-        if(iter < maxIter / 3){
-            chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
-            chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
-            evaluation(child1);         // 更新child1和child2参数
-            evaluation(child2);
-            population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
-            population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
-        }
-        else{
-            population[i].sequence = parent1;
-            population[i + 1].sequence = parent2;
-        }
+        chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
+        chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
+        evaluation(child1);         // 更新child1和child2参数
+        evaluation(child2);
+        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
+
 
 //        if(population[i].objs[0] == INT_MAX / 2 or population[i+1].objs[0] == INT_MAX / 2)  goto label;     // 必须生成可行解
 
@@ -388,7 +378,7 @@ void ImprovedNSGA2::cross(vector<chromosome>& population, int& iter) {
 
 }
 
-void ImprovedNSGA2::mutation(vector<chromosome> &population, int& iter) {
+void ImprovedNSGA2::mutation(vector<chromosome> &population) {
     for(int i = 0; i < population.size(); ++i){
         vector<int> parent = population[i].sequence;
         // 生成位置序列（0-1）
