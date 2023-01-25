@@ -2,7 +2,6 @@
 // Created by Zhiaan on 2023/1/12.
 //
 
-#include <random>
 #include "ImprovedNSGA2.h"
 ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
@@ -17,26 +16,28 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     vector<chromosome> population(populationSize);
 
     // 生成初始解
-    greedyObj2InitializePopulation(population);     // obj2贪婪算法初始化种群
+    greedyObj1InitializePopulation(population);     // obj2贪婪算法初始化种群
 //    randomInitializePopulation(population);           // 随机初始化种群
 
     for(int iter = 0; iter < maxIter; ++iter){
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
         vector<chromosome> newPopulation = population;      // 生成新种群
-        cross(newPopulation);                           // 交叉算子
+
+//        cross(newPopulation);                           // 交叉算子
+        particallyMappedCross(newPopulation);           // PMX
 
         mutation(newPopulation);                        // 变异算子
 
         newPopulation.insert(newPopulation.end(), population.begin(), population.end());    // 老种群与新种群合并
 
         nondominatedSorting(newPopulation);     // 非支配排序
-
         population.clear();
         population.insert(population.begin(), newPopulation.begin(), newPopulation.begin() + populationSize);
 
     }
 
     for(auto i: population) {
+        if(i.rank != 0 or solutions.size() == 50) break;
         solution s;
         s.sequence = i.sequence;
         s.obj1 = i.objs[0];
@@ -44,12 +45,11 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         s.obj3 = i.objs[2];
         solutions.emplace_back(s);
         cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << ' ' << i.rank  << ' ' << i.crowding_distance  << endl;
-        if(i.rank != 0 or solutions.size() == 50) break;
+
         // for (auto j: i.sequence) {
         //     cout << j << ' ';
         // } cout << endl;
     }
-    cout << population.size() << ' ' << solutions.size() <<  endl;
 
     return solutions;
 }
@@ -151,19 +151,172 @@ void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
     }
 }
 
-void ImprovedNSGA2::greedyObj2InitializePopulation(vector<chromosome> &population){
-    string filePath = "../result/Obj1Greedy/" + ins.instanceNo + ".csv";
-    // TODO 地址
+void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &population){
+    string filePath1 = "../result/Obj1Greedy/" + ins.instanceNo + ".csv";
+    string filePath2 = "../result/Obj2Greedy/" + ins.instanceNo + ".csv";
     IO io;
-    vector<vector<string>> greedySolution = io.readCSV(filePath);
+    vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
+    vector<vector<string>> obj2GreedySolution = io.readCSV(filePath2);
     for(int i = 0; i != populationSize; ++i){
         if(i == 0){
             for(int j = 0; j != chromosomeLength; ++j){
-                population[i].sequence.emplace_back(stoi(greedySolution[0][j]));
+                population[i].sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
             }
             evaluation(population[i]);
         }
-        else    population[i] = population[0];
+        else if(i < obj2GreedySolution.size() + 1){
+            for(int j = 0; j != chromosomeLength; ++j){
+                population[i].sequence.emplace_back(stoi(obj2GreedySolution[i-1][j]));
+            }
+            evaluation(population[i]);
+        }
+        else{
+//            population[i] = population[0];
+//            continue;
+            chromosome& chro = population[i];
+            label:
+            chro.sequence = vector<int>(chromosomeLength, 0);
+            for(int index = 0; index != chromosomeLength; ++index){
+                chro.sequence[index] = index;
+            }
+            // 随机生成初序列
+            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+            shuffle (chro.sequence.begin(), chro.sequence.end(), std::default_random_engine(seed));
+
+            // 计算目标值
+            chro.objs = vector<double>(3, 0);
+            evaluation(chro);
+            if(chro.objs[0] == std::numeric_limits<double>::infinity())  goto label;     // 生成可行解 不可行解重新生成
+
+//            unordered_map<string, vector<int>> pureColorCars;
+//            vector<int> mixedColorCars = {};
+//            for(auto i: ins.cars){
+//                if(i.roofColor == i.bodyColor or i.roofColor == "无对比颜色"){
+//                    unordered_map<string, vector<int>>::iterator iter;
+//                    if((iter = pureColorCars.find(i.bodyColor)) != pureColorCars.end()){
+//                        iter->second.emplace_back(i.carNo-1);
+//                    }
+//                    else{
+//                        pureColorCars.insert(pair<string, vector<int>>{i.bodyColor, vector<int>{i.carNo - 1}});
+//                    }
+//                }
+//                else{
+//                    mixedColorCars.emplace_back(i.carNo-1);
+//                }
+//            }
+//
+//            while(!mixedColorCars.empty()){
+//                int index = ::rand() % mixedColorCars.size();           // 随机选择一个混色
+//                chro.sequence.emplace_back(mixedColorCars[index]);
+//
+////        cout << mixedColorCars[index] << ' ' << ins.cars[mixedColorCars[index]].bodyColor << endl;
+//                mixedColorCars.erase(mixedColorCars.begin() + index);
+////        for(auto i: mixedColorCars){
+////            cout << i << " ";
+////        }cout << endl;
+//
+//                if(!pureColorCars.empty()){         // 选择与混色车身相同的颜色
+//                    unordered_map<string, vector<int>>::iterator iter;
+//                    if((iter = pureColorCars.find(ins.cars[mixedColorCars[index]].bodyColor)) != pureColorCars.end()){
+//
+//                    }
+//                    else{
+//                        index = ::rand() % pureColorCars.size();    // 随机选择一个颜色
+//                        iter = pureColorCars.begin();
+//                        for(int i = 0; i != index; ++i){
+//                            ++iter;
+//                        }
+//                    }
+////            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+////            shuffle(iter->second.begin(), iter->second.end(), default_random_engine(seed));
+//
+//                    int size = iter->second.size();
+//                    for(int i = 0; i != min(5, size); ++i){         // TODO 可能空隙不到 同色/4 那要改为5的倍数
+//                        chro.sequence.emplace_back(iter->second[0]);
+//                        iter->second.erase(iter->second.begin());
+//                    }
+//                    if(iter->second.size() == 0)    pureColorCars.erase(iter);
+//                }
+//
+//            }
+//
+//            evaluation(chro);
+
+//            do {
+//                chro.sequence.clear();
+//                // obj1
+//                vector<int> typeA = {};
+//                vector<int> typeA4 = {};
+//                vector<int> typeB = {};
+//                vector<int> typeB4 = {};
+//
+//                for (auto i: ins.cars) {
+//                    if (i.type == "A" and i.speedTrans == "两驱") {
+//                        typeA.emplace_back(i.carNo - 1);
+//                    } else if (i.type == "A" and i.speedTrans == "四驱") {
+//                        typeA4.emplace_back(i.carNo - 1);
+//                    } else if (i.type == "B" and i.speedTrans == "两驱") {
+//                        typeB.emplace_back(i.carNo - 1);
+//                    } else if (i.type == "B" and i.speedTrans == "四驱") {
+//                        typeB4.emplace_back(i.carNo - 1);
+//                    }
+//                }
+//
+//                pretreatSpeedTrans(typeA, typeA4);
+//                pretreatSpeedTrans(typeB, typeB4);
+//
+//
+//                int remainA = typeA.size() % 23;
+//                int remainB = typeB.size() % 23;
+//                int fragmentNumA = typeA.size() / 23;
+//                int fragmentNumB = typeB.size() / 23;
+//
+//                //        cout << remainA << ' ' << remainB << ' ' << fragmentNumA << ' ' << fragmentNumB << endl;
+//
+//
+//                int preA = 0, preB = 0, behindA = 0, behindB = 0;
+//                for (int i = 0; i != fragmentNumA + fragmentNumB; ++i) {      // n1+n2次片段选择
+//                    int typeChoose = ::rand() % 2;      // 选择加入哪个序列
+//                    if (typeChoose == 0 and behindA == typeA.size()) typeChoose = 1;
+//                    if (typeChoose == 1 and behindB == typeB.size()) typeChoose = 0;
+//
+//                    switch (typeChoose) {
+//                        case 0: {        // 选择typeA序列
+//                            if (typeA.size() - preA < 2 * 23) {
+//                                chro.sequence.insert(chro.sequence.end(), typeA.begin() + preA, typeA.end());
+//                                behindA = typeA.size();
+//                            } else {
+//                                int freeLength = remainA == 0 ? 0 : ::rand() % remainA;
+//                                behindA += 23 + freeLength;
+//                                chro.sequence.insert(chro.sequence.end(), typeA.begin() + preA, typeA.begin() + behindA);
+//                                remainA -= freeLength;
+//                                preA = behindA;
+//                            }
+//
+//                            break;
+//                        }
+//                        case 1: {
+//                            if (typeB.size() - preB < 2 * 23) {
+//                                chro.sequence.insert(chro.sequence.end(), typeB.begin() + preB, typeB.end());
+//                                behindB = typeB.size();
+//                            } else {
+//                                int freeLength = remainB == 0 ? 0 : ::rand() % remainB;
+//
+//                                //                    cout << freeLength << " B" << " ";
+//                                behindB += 23 + freeLength;
+//                                chro.sequence.insert(chro.sequence.end(), typeB.begin() + preB, typeB.begin() + behindB);
+//                                remainB -= freeLength;
+//
+//                                //                    cout << remainA << " rB" << endl;
+//                                preB = behindB;
+//                            }
+//                            break;
+//                        }
+//                    }
+//                }
+//                evaluation(chro);
+//            } while (chro.objs[0] == std::numeric_limits<double>::infinity());
+        }
     }
 
 
@@ -252,59 +405,59 @@ void ImprovedNSGA2::greedyObj2InitializePopulation(vector<chromosome> &populatio
 //    }
 }
 
-void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &population){
-    //    chromosome chro;
-//    unordered_map<string, vector<int>> pureColorCars;
-//    vector<int> mixedColorCars = {};
-//    for(auto i: ins.cars){
-//        if(i.roofColor == i.bodyColor or i.roofColor == "无对比颜色"){
-//            unordered_map<string, vector<int>>::iterator iter;
-//            if((iter = pureColorCars.find(i.bodyColor)) != pureColorCars.end()){
-//                iter->second.emplace_back(i.carNo-1);
-//            }
-//            else{
-//                pureColorCars.insert(pair<string, vector<int>>{i.bodyColor, vector<int>{i.carNo - 1}});
-//            }
-//        }
-//        else{
-//            mixedColorCars.emplace_back(i.carNo-1);
-//        }
-//    }
-//
-//    while(!mixedColorCars.empty()){
-//        int index = ::rand() % mixedColorCars.size();           // 随机选择一个混色
-//        chro.sequence.emplace_back(mixedColorCars[index]);
-//
-////        cout << mixedColorCars[index] << ' ' << ins.cars[mixedColorCars[index]].bodyColor << endl;
-//        mixedColorCars.erase(mixedColorCars.begin() + index);
-////        for(auto i: mixedColorCars){
-////            cout << i << " ";
-////        }cout << endl;
-//
-//        if(!pureColorCars.empty()){         // 选择与混色车身相同的颜色
-//            unordered_map<string, vector<int>>::iterator iter;
-//            if((iter = pureColorCars.find(ins.cars[mixedColorCars[index]].bodyColor)) != pureColorCars.end()){
-//
-//            }
-//            else{
-//                index = ::rand() % pureColorCars.size();    // 随机选择一个颜色
-//                iter = pureColorCars.begin();
-//                for(int i = 0; i != index; ++i){
-//                    ++iter;
-//                }
-//            }
-////            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-////            shuffle(iter->second.begin(), iter->second.end(), default_random_engine(seed));
-//
-//            int size = iter->second.size();
-//            for(int i = 0; i != min(5, size); ++i){         // TODO 可能空隙不到 同色/4 那要改为5的倍数
-//                chro.sequence.emplace_back(iter->second[0]);
-//                iter->second.erase(iter->second.begin());
-//            }
-//            if(iter->second.size() == 0)    pureColorCars.erase(iter);
-//        }
-//
-//    }
+void ImprovedNSGA2::greedyObj2InitializePopulation(vector<chromosome> &population){
+    chromosome chro;
+    unordered_map<string, vector<int>> pureColorCars;
+    vector<int> mixedColorCars = {};
+    for(auto i: ins.cars){
+        if(i.roofColor == i.bodyColor or i.roofColor == "无对比颜色"){
+            unordered_map<string, vector<int>>::iterator iter;
+            if((iter = pureColorCars.find(i.bodyColor)) != pureColorCars.end()){
+                iter->second.emplace_back(i.carNo-1);
+            }
+            else{
+                pureColorCars.insert(pair<string, vector<int>>{i.bodyColor, vector<int>{i.carNo - 1}});
+            }
+        }
+        else{
+            mixedColorCars.emplace_back(i.carNo-1);
+        }
+    }
+
+    while(!mixedColorCars.empty()){
+        int index = ::rand() % mixedColorCars.size();           // 随机选择一个混色
+        chro.sequence.emplace_back(mixedColorCars[index]);
+
+//        cout << mixedColorCars[index] << ' ' << ins.cars[mixedColorCars[index]].bodyColor << endl;
+        mixedColorCars.erase(mixedColorCars.begin() + index);
+//        for(auto i: mixedColorCars){
+//            cout << i << " ";
+//        }cout << endl;
+
+        if(!pureColorCars.empty()){         // 选择与混色车身相同的颜色
+            unordered_map<string, vector<int>>::iterator iter;
+            if((iter = pureColorCars.find(ins.cars[mixedColorCars[index]].bodyColor)) != pureColorCars.end()){
+
+            }
+            else{
+                index = ::rand() % pureColorCars.size();    // 随机选择一个颜色
+                iter = pureColorCars.begin();
+                for(int i = 0; i != index; ++i){
+                    ++iter;
+                }
+            }
+//            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+//            shuffle(iter->second.begin(), iter->second.end(), default_random_engine(seed));
+
+            int size = iter->second.size();
+            for(int i = 0; i != min(5, size); ++i){         // TODO 可能空隙不到 同色/4 那要改为5的倍数
+                chro.sequence.emplace_back(iter->second[0]);
+                iter->second.erase(iter->second.begin());
+            }
+            if(iter->second.size() == 0)    pureColorCars.erase(iter);
+        }
+
+    }
 //    for(auto a: chro.sequence){
 //        cout << a << ' ';
 //    }cout << endl;
@@ -315,52 +468,45 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 }
 
 void ImprovedNSGA2::cross(vector<chromosome>& population) {
+//    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+//    shuffle(population.begin(), population.end(), default_random_engine(seed));
     for(int i = 0; i < population.size(); i += 2){
         vector<int> parent1 = population[i].sequence;
         vector<int> parent2 = population[i+1].sequence;
 
-        if(parent1 == parent2){
-            chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
-            chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
-            evaluation(child1);         // 更新child1和child2参数
-            evaluation(child2);
-            population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
-            population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
+        if(parent1 != parent2){
+            // 生成位置序列（0-1）
+            vector<int> position(parent1.size(), 0);
 
-            continue;
-        }
-
-        // 生成位置序列（0-1）
-        vector<int> position(parent1.size(), 0);
-
-        // 记录需要换顺序的元素
-        vector<pair<int, int>> genes1 = {};
-        vector<pair<int, int>> genes2 = {};
-        for(int i = 0; i != position.size(); ++i){
-            position[i] = ::rand() % 2;
-            if(position[i] == 1){
-                genes1.emplace_back(pair<int, int>{parent1[i], 0});
-                genes2.emplace_back(pair<int, int>{parent2[i], 0});
+            // 记录需要换顺序的元素
+            vector<pair<int, int>> genes1 = {};
+            vector<pair<int, int>> genes2 = {};
+            for(int i = 0; i != position.size(); ++i){
+                position[i] = ::rand() % 2;
+                if(position[i] == 1){
+                    genes1.emplace_back(pair<int, int>{parent1[i], 0});
+                    genes2.emplace_back(pair<int, int>{parent2[i], 0});
+                }
             }
-        }
 
 //        for(auto i: genes1)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
 //        for(auto i: genes2)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
 
-        for(auto& i: genes1){        // 找到在parent2中的位置
-            i.second = std::find(parent2.begin(), parent2.end(),i.first) - parent2.begin();
-        }
-        for(auto& i: genes2){        // 找到在parent1中的位置
-            i.second = std::find(parent1.begin(), parent1.end(),i.first) - parent1.begin();
-        }
-        sort(genes1.begin(), genes1.end(), cmp1);
-        sort(genes2.begin(), genes2.end(), cmp1);
+            for(auto& i: genes1){        // 找到在parent2中的位置
+                i.second = std::find(parent2.begin(), parent2.end(),i.first) - parent2.begin();
+            }
+            for(auto& i: genes2){        // 找到在parent1中的位置
+                i.second = std::find(parent1.begin(), parent1.end(),i.first) - parent1.begin();
+            }
+            sort(genes1.begin(), genes1.end(), cmp1);
+            sort(genes2.begin(), genes2.end(), cmp1);
 
 //        for(auto i: genes1)  cout << "(" << i.first << ',' << i.second << ") ";cout << endl;
-        for(int i = 0, j = 0; j != genes1.size(); ++i){
-            if(position[i] == 1){
-                parent1[i] = genes1[j].first;
-                parent2[i] = genes2[j++].first;
+            for(int i = 0, j = 0; j != genes1.size(); ++i){
+                if(position[i] == 1){
+                    parent1[i] = genes1[j].first;
+                    parent2[i] = genes2[j++].first;
+                }
             }
         }
 
@@ -370,19 +516,78 @@ void ImprovedNSGA2::cross(vector<chromosome>& population) {
         evaluation(child2);
         population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
         population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
-
+//        population[i] = child1;
+//        population[i + 1] = child2;
 
 //        if(population[i].objs[0] == INT_MAX / 2 or population[i+1].objs[0] == INT_MAX / 2)  goto label;     // 必须生成可行解
-
     }
+}
 
+void ImprovedNSGA2::particallyMappedCross(vector<chromosome>& population){
+//    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+//    shuffle(population.begin(), population.end(), default_random_engine(seed));
+    for(int i = 0; i < population.size(); i += 2){
+        vector<int> parent1 = population[i].sequence;
+        vector<int> parent2 = population[i+1].sequence;
+
+        if(parent1 != parent2) {
+            // 生成分段位置 交换位置[index1, index2)
+            int index1 = ::rand() % parent1.size();
+            int index2 = ::rand() % parent1.size();
+            if(index1 > index2) swap(index1, index2);
+
+            unordered_map<int, int> map1, map2;         // 记录配对
+            vector<int> r1(parent1.size(), 0);
+            vector<int> r2(parent2.size(), 0);
+            for(int j = index1; j != index2; ++j){
+
+                map1.insert(pair<int, int>{parent1[j], parent2[j]});
+                map2.insert(pair<int, int>{parent2[j], parent1[j]});
+                swap(parent1[j], parent2[j]);
+                r1[parent1[j]] = 1;
+                r2[parent2[j]] = 1;
+            }
+            for(int j = 0; j != parent1.size(); ++j){
+                if(j >= index1 and j < index2)  continue;
+                if(r1[parent1[j]] != 0){
+                    int key = parent1[j];
+                    while(r1[map2[key]] == 1){
+                        key = map2[key];
+                    }
+                    parent1[j] = map2[key];
+                }
+                if(r2[parent2[j]] != 0){
+                    int key = parent2[j];
+                    while(r2[map1[key]] == 1){
+                        key = map1[key];
+                    }
+                    parent2[j] = map1[key];
+                }
+            }
+        }
+        else{
+            int index1 = ::rand() % parent1.size();
+            int index2 = ::rand() % parent1.size();
+            swap(parent1[index1], parent1[index2]);
+            swap(parent2[index1], parent2[index2]);
+        }
+
+        chromosome child1 = chromosome{parent1, vector<double>(3, 0)};
+        chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
+        evaluation(child1);         // 更新child1和child2参数
+        evaluation(child2);
+        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
+//        population[i] = child1;
+//        population[i + 1] = child2;
+    }
 }
 
 void ImprovedNSGA2::mutation(vector<chromosome> &population) {
     for(int i = 0; i < population.size(); ++i){
         vector<int> parent = population[i].sequence;
         // 生成位置序列（0-1）
-        int oneNum = ::rand() % (parent.size() / 2);    // 变异位置数量
+        int oneNum = ::rand() % (parent.size() / 4);    // 变异位置数量
         vector<int> position(parent.size(), 0);
         for(int i = 0; i != oneNum; ++i){
             position[i] = 1;
@@ -408,86 +613,10 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
         chromosome child = chromosome{parent, vector<double>(3, 0)};
         evaluation(child);         // 更新child参数
         population[i] = child.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
-
+//        population[i] = child;
     }
 }
 
-// void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
-//     // 非支配排序
-//     for (int i = 0; i < populationSize; ++i) {
-//         population[i].populationIndex = i;
-//         population[i].crowding_distance = 0;
-//         population[i].rank = 0;
-//     }
-
-//     vector<vector<chromosome>> fronts = {};
-//     vector<chromosome> front = {};
-//     vector<int> dominatingNum(populationSize, 0);
-//     vector<vector<int>> dominatedSet(populationSize, vector<int>());
-//     int k = 0;
-//     for(int popIndex = 0; popIndex < populationSize; ++popIndex){
-//         dominatingNum[popIndex] = 0;
-//         for (int otherPopIndex = 0; otherPopIndex < populationSize; ++otherPopIndex) {
-//             if (population[popIndex] < population[otherPopIndex]){
-//                 dominatedSet[popIndex].emplace_back(otherPopIndex);
-//             } else if (population[otherPopIndex] < population[popIndex]){
-//                 dominatingNum[popIndex]++;
-//             }
-//         }
-
-//         if(dominatingNum[popIndex] == 0){
-//             population[popIndex].rank = 0;
-//             front.emplace_back(population[popIndex]);
-//         }
-//     }
-//     fronts.emplace_back(front);
-//     int frontIndex = 0;
-//     while(!fronts[frontIndex].empty()){
-//         vector<chromosome> Q = {};
-//         for(auto& pop: fronts[frontIndex]){
-//             for(auto& otherPopIndex: dominatedSet[pop.populationIndex]){
-//                 --dominatingNum[otherPopIndex];
-//                 if(dominatingNum[otherPopIndex] == 0){
-//                     population[otherPopIndex].rank = frontIndex + 1;
-//                     Q.emplace_back(population[otherPopIndex]);
-//                 }
-//             }
-//         }
-//         ++frontIndex;
-//         fronts.emplace_back(Q);
-//     }
-//     fronts.pop_back();
-
-//     // 计算拥挤距离
-//     int objNum = population[0].objs.size();
-//     for (auto &front : fronts) {
-//         for (int obj_i = 0; obj_i < objNum; ++obj_i) {
-//             sort(front.begin(), front.end(), [&](const chromosome &a, const chromosome &b) {
-//                 return a.objs[obj_i] < b.objs[obj_i];
-//             });
-//             double norm = (front[front.size() - 1].objs[obj_i] - front[0].objs[obj_i]);
-//             if(norm != 0){
-//                 front[0].crowding_distance = std::numeric_limits<double>::infinity();
-//                 int frontSize = front.size();
-//                 front[frontSize - 1].crowding_distance = std::numeric_limits<double>::infinity();
-//                 for (int index = 1; index < frontSize - 1; ++index) {
-//                     front[index].crowding_distance += (front[index + 1].objs[obj_i] - front[index - 1].objs[obj_i]) / norm;
-//                 }
-//             }
-//         }
-//     }
-
-
-//     population = {};
-//     for(auto& front: fronts){
-//         sort(front.begin(), front.end(), [](const chromosome &a, const chromosome &b) {
-//             return a.crowding_distance > b.crowding_distance;
-//         });
-//         for(auto& p: front){
-//             population.emplace_back(p);
-//         }
-//     }
-// }
 
 void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
     // 非支配排序
@@ -547,9 +676,9 @@ void ImprovedNSGA2::computeCrowdingDistance(vector<chromosome> &population, vect
     int sortedSize = 0;
     for (auto &front : fronts) {
         sortedSize += front.size();
-        if (sortedSize < needSize) {
-            continue;
-        }
+//        if (sortedSize < needSize) {
+//            continue;
+//        }
         if (sortedSize == needSize) {
             break;
         }
