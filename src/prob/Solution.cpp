@@ -17,7 +17,7 @@ void Solution::outputCSV() {        // 输出csv
     // std::filesystem::remove(outputPath);
 
     IO io;
-    string head = "";
+    string head;
     for(int i = 1; i != stoi(ins.instanceNo.substr(5, ins.instanceNo.size() == 8 ? 3 : 4)) + 1; ++i){
         head += "Variable " + to_string(i) + ",";
     }
@@ -26,7 +26,7 @@ void Solution::outputCSV() {        // 输出csv
 
     // 表内容
     for(auto solution: outputResult){
-        string outputSolution = "";
+        string outputSolution;
         for(auto index: solution.sequence){
             outputSolution += to_string(index) + ",";
         }
