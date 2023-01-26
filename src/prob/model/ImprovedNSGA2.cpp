@@ -174,7 +174,7 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 //            population[i] = population[0];
 //            continue;
             chromosome& chro = population[i];
-            label:
+//            label:
             chro.sequence = vector<int>(chromosomeLength, 0);
             for(int index = 0; index != chromosomeLength; ++index){
                 chro.sequence[index] = index;
@@ -186,7 +186,7 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
             // 计算目标值
             chro.objs = vector<double>(3, 0);
             evaluation(chro);
-            if(chro.objs[0] == std::numeric_limits<double>::infinity())  goto label;     // 生成可行解 不可行解重新生成
+//            if(chro.objs[0] == std::numeric_limits<double>::infinity())  goto label;     // 生成可行解 不可行解重新生成
 
 //            unordered_map<string, vector<int>> pureColorCars;
 //            vector<int> mixedColorCars = {};
@@ -514,10 +514,10 @@ void ImprovedNSGA2::cross(vector<chromosome>& population) {
         chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
         evaluation(child1);         // 更新child1和child2参数
         evaluation(child2);
-        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
-        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
-//        population[i] = child1;
-//        population[i + 1] = child2;
+//        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+//        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
+        population[i] = child1;
+        population[i + 1] = child2;
 
 //        if(population[i].objs[0] == INT_MAX / 2 or population[i+1].objs[0] == INT_MAX / 2)  goto label;     // 必须生成可行解
     }
@@ -576,10 +576,10 @@ void ImprovedNSGA2::particallyMappedCross(vector<chromosome>& population){
         chromosome child2 = chromosome{parent2, vector<double>(3, 0)};
         evaluation(child1);         // 更新child1和child2参数
         evaluation(child2);
-        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
-        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
-//        population[i] = child1;
-//        population[i + 1] = child2;
+//        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
+//        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
+        population[i] = child1;
+        population[i + 1] = child2;
     }
 }
 
@@ -612,8 +612,8 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
         }
         chromosome child = chromosome{parent, vector<double>(3, 0)};
         evaluation(child);         // 更新child参数
-        population[i] = child.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
-//        population[i] = child;
+//        population[i] = child.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
+        population[i] = child;
     }
 }
 
