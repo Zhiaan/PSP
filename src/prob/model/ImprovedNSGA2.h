@@ -15,7 +15,7 @@
 #include <set>
 struct chromosome{
     vector<int> sequence;
-    vector<double> objs;        // {obj1, obj2, obj3}
+    vector<double> objs;        // {obj1, obj2, obj4, obj3}
     int rank;
     double crowding_distance;
 
@@ -61,6 +61,7 @@ private:
     void cross(vector<chromosome>& population);
     void particallyMappedCross(vector<chromosome>& population);
     void mutation(vector<chromosome>& population);
+    void particallySwapMutation(vector<chromosome>& population);
     void nondominatedSorting(vector<chromosome>& population);
     void computeCrowdingDistance(vector<chromosome> &population, vector<vector<chromosome>> &fronts);
 };
