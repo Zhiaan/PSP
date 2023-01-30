@@ -16,8 +16,9 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     vector<chromosome> population(populationSize);
 
     // 生成初始解
-     greedyObj1InitializePopulation(population);     // obj2贪婪算法初始化种群
-//    randomInitializePopulation(population);           // 随机初始化种群
+    greedySortInitializePopulation(population);
+    // greedyObj1InitializePopulation(population);     // obj2贪婪算法初始化种群
+    // randomInitializePopulation(population);           // 随机初始化种群
 
     for(int iter = 0; iter < maxIter; ++iter){
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
@@ -156,6 +157,193 @@ void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
     }
 }
 
+void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& population) {
+    auto sortedByType = [](vector<carInfo> &cars) {
+        std::sort(cars.begin(), cars.end(), [](const carInfo &a, const carInfo &b) {
+            return a.type < b.type;
+        });
+    };
+    auto splitColor = [](vector<carInfo> &cars, vector<carInfo> &saved_same_color_cars, vector<carInfo> &saved_not_same_color_cars) {
+        // 划分车身车顶颜色相同和不同的车
+        for (auto car: cars) {
+            if(car.roofColor != "无对比颜色" and car.roofColor != car.bodyColor){     // 本车车顶颜色!=车身颜色
+                saved_not_same_color_cars.emplace_back(car);
+            } else{
+                saved_same_color_cars.emplace_back(car);
+            }
+        }
+    };
+    auto sortedByColor = [](vector<carInfo> &cars_same_color) {
+        std::sort(cars_same_color.begin(), cars_same_color.end(), [](const carInfo &a, const carInfo &b) {
+            return a.bodyColor < b.bodyColor;
+        });
+    };
+    auto to_2d = [](vector<carInfo> &cars_same_color) -> vector<vector<carInfo>> {
+        vector<vector<carInfo>> saved_cars_same_color;
+        vector<carInfo> temp;
+        int i;
+        for (i = 0; i < cars_same_color.size() - 1; ++i) {
+            temp.emplace_back(cars_same_color[i]);
+            if (cars_same_color[i].bodyColor != cars_same_color[i + 1].bodyColor) {
+                saved_cars_same_color.emplace_back(temp);
+                temp.clear();
+            }
+        }
+        temp.emplace_back(cars_same_color[i]);
+        saved_cars_same_color.emplace_back(temp);
+        return saved_cars_same_color;
+    };
+
+    auto emplace_helper = [](chromosome &chro, vector<vector<carInfo>> &A_same_copy, vector<carInfo> &A_not_same_copy, vector<vector<carInfo>> &B_same_copy, vector<carInfo> &B_not_same_copy) {
+        // 此函数保证 A 放前面，B 放后面
+        // 为了减少代码冗余，当要 B 放前面时，只需相反顺序传参即可
+        int rand_num = ::rand() % 4;
+        if (rand_num == 0) {
+            // A 相同颜色放前面，B 相同颜色放前面
+            for (auto &cars_same_color: A_same_copy) {
+                for (auto &car: cars_same_color) {
+                    chro.sequence.emplace_back(car.carNo);
+                }
+            }
+            for (auto &car: A_not_same_copy) {
+                chro.sequence.emplace_back(car.carNo);
+            }
+            for (auto &cars_same_color: B_same_copy) {
+                for (auto &car: cars_same_color) {
+                    chro.sequence.emplace_back(car.carNo);
+                }
+            }
+            for (auto &car: B_not_same_copy) {
+                chro.sequence.emplace_back(car.carNo);
+            }
+        } else if (rand_num == 1) {
+            // A 相同颜色放前面，B 相同颜色后面
+            for (auto &cars_same_color: A_same_copy) {
+                for (auto &car: cars_same_color) {
+                    chro.sequence.emplace_back(car.carNo);
+                }
+            }
+            for (auto &car: A_not_same_copy) {
+                chro.sequence.emplace_back(car.carNo);
+            }
+            for (auto &car: B_not_same_copy) {
+                chro.sequence.emplace_back(car.carNo);
+            }
+            for (auto &cars_same_color: B_same_copy) {
+                for (auto &car: cars_same_color) {
+                    chro.sequence.emplace_back(car.carNo);
+                }
+            }
+        } else if (rand_num == 2) {
+            // A 相同颜色放后面，B 相同颜色放前面
+            for (auto &car: A_not_same_copy) {
+                chro.sequence.emplace_back(car.carNo);
+            }
+            for (auto &cars_same_color: A_same_copy) {
+                for (auto &car: cars_same_color) {
+                    chro.sequence.emplace_back(car.carNo);
+                }
+            }
+            for (auto &cars_same_color: B_same_copy) {
+                for (auto &car: cars_same_color) {
+                    chro.sequence.emplace_back(car.carNo);
+                }
+            }
+            for (auto &car: B_not_same_copy) {
+                chro.sequence.emplace_back(car.carNo);
+            }
+        } else if (rand_num == 3) {
+            // A 相同颜色放后面，B 相同颜色放后面
+            for (auto &car: A_not_same_copy) {
+                chro.sequence.emplace_back(car.carNo);
+            }
+            for (auto &cars_same_color: A_same_copy) {
+                for (auto &car: cars_same_color) {
+                    chro.sequence.emplace_back(car.carNo);
+                }
+            }
+            for (auto &car: B_not_same_copy) {
+                chro.sequence.emplace_back(car.carNo);
+            }
+            for (auto &cars_same_color: B_same_copy) {
+                for (auto &car: cars_same_color) {
+                    chro.sequence.emplace_back(car.carNo);
+                }
+            }
+        } else {
+            cout << "error" << endl;
+            assert(false);
+        }
+    };
+
+    vector<carInfo> cars_type = ins.cars;
+    sortedByType(cars_type);
+    auto iter_type = std::find_if(cars_type.begin(), cars_type.end(), [](const carInfo &a) {
+        return a.type == "B";
+    });
+    vector<carInfo> cars_A = vector<carInfo>(cars_type.begin(), iter_type);
+    vector<carInfo> cars_B = vector<carInfo>(iter_type, cars_type.end());
+    vector<carInfo> cars_A_same_color; 
+    vector<carInfo> cars_A_not_same_color; // not split more, final use!!!
+    vector<carInfo> cars_B_same_color;
+    vector<carInfo> cars_B_not_same_color; // not split more, final use!!!
+    splitColor(cars_A, cars_A_same_color, cars_A_not_same_color);
+    splitColor(cars_B, cars_B_same_color, cars_B_not_same_color);
+    sortedByColor(cars_A_same_color);
+    sortedByColor(cars_B_same_color);
+
+    vector<vector<carInfo>> split_cars_A_same_color = to_2d(cars_A_same_color); // final use !!!
+    vector<vector<carInfo>> split_cars_B_same_color = to_2d(cars_B_same_color); // final use !!!
+
+    for (auto& chro: population) {
+        vector<carInfo> A_not_same_copy = cars_A_not_same_color; // not split more, final use!!!
+        vector<carInfo> B_not_same_copy = cars_B_not_same_color; // not split more, final use!!!
+        vector<vector<carInfo>> A_same_copy = split_cars_A_same_color; // final use !!!
+        vector<vector<carInfo>> B_same_copy = split_cars_B_same_color; // final use !!!
+
+
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle (A_not_same_copy.begin(), A_not_same_copy.end(), std::default_random_engine(seed));
+
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle (B_not_same_copy.begin(), B_not_same_copy.end(), std::default_random_engine(seed));
+
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle (A_same_copy.begin(), A_same_copy.end(), std::default_random_engine(seed));
+        for (auto &vec : A_same_copy) {
+            seed = std::chrono::system_clock::now().time_since_epoch().count();
+            shuffle (vec.begin(), vec.end(), std::default_random_engine(seed));
+        }
+
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle (B_same_copy.begin(), B_same_copy.end(), std::default_random_engine(seed));
+        for (auto &vec : B_same_copy) {
+            seed = std::chrono::system_clock::now().time_since_epoch().count();
+            shuffle (vec.begin(), vec.end(), std::default_random_engine(seed));
+        }
+
+        if (::rand() % 2) {
+            // A 放前面
+            emplace_helper(chro, A_same_copy, A_not_same_copy, B_same_copy, B_not_same_copy);
+        } else {
+            // B 放前面
+            emplace_helper(chro, B_same_copy, B_not_same_copy, A_same_copy, A_not_same_copy);
+        }
+    }
+
+    for (auto &p: population) {
+        evaluation(p);
+        // for (auto &i : p.sequence) {
+        //     auto iter = find_if(ins.cars.begin(), ins.cars.end(), [&](const carInfo &a) {
+        //         return a.carNo == i;
+        //     });
+        //     cout << i << " " << iter->type << " " << iter->bodyColor << " " << iter->roofColor << endl;
+        // }
+        // cout << endl;
+        // assert(false);
+    }
+}
+
 void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &population){
     string filePath1 = "../result/Obj1Greedy/" + ins.instanceNo + ".csv";
     string filePath2 = "../result/Obj2Greedy/" + ins.instanceNo + ".csv";
@@ -200,14 +388,14 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 //                if(i.roofColor == i.bodyColor or i.roofColor == "无对比颜色"){
 //                    unordered_map<string, vector<int>>::iterator iter;
 //                    if((iter = pureColorCars.find(i.bodyColor)) != pureColorCars.end()){
-//                        iter->second.emplace_back(i.carNo-1);
+//                        iter->second.emplace_back(i.carNo);
 //                    }
 //                    else{
-//                        pureColorCars.insert(pair<string, vector<int>>{i.bodyColor, vector<int>{i.carNo - 1}});
+//                        pureColorCars.insert(pair<string, vector<int>>{i.bodyColor, vector<int>{i.carNo}});
 //                    }
 //                }
 //                else{
-//                    mixedColorCars.emplace_back(i.carNo-1);
+//                    mixedColorCars.emplace_back(i.carNo);
 //                }
 //            }
 //
@@ -336,13 +524,13 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 //
 //            for (auto i: ins.cars) {
 //                if (i.type == "A" and i.speedTrans == "两驱") {
-//                    typeA.emplace_back(i.carNo - 1);
+//                    typeA.emplace_back(i.carNo);
 //                } else if (i.type == "A" and i.speedTrans == "四驱") {
-//                    typeA4.emplace_back(i.carNo - 1);
+//                    typeA4.emplace_back(i.carNo);
 //                } else if (i.type == "B" and i.speedTrans == "两驱") {
-//                    typeB.emplace_back(i.carNo - 1);
+//                    typeB.emplace_back(i.carNo;
 //                } else if (i.type == "B" and i.speedTrans == "四驱") {
-//                    typeB4.emplace_back(i.carNo - 1);
+//                    typeB4.emplace_back(i.carNo);
 //                }
 //            }
 //
@@ -418,14 +606,14 @@ void ImprovedNSGA2::greedyObj2InitializePopulation(vector<chromosome> &populatio
         if(i.roofColor == i.bodyColor or i.roofColor == "无对比颜色"){
             unordered_map<string, vector<int>>::iterator iter;
             if((iter = pureColorCars.find(i.bodyColor)) != pureColorCars.end()){
-                iter->second.emplace_back(i.carNo-1);
+                iter->second.emplace_back(i.carNo);
             }
             else{
-                pureColorCars.insert(pair<string, vector<int>>{i.bodyColor, vector<int>{i.carNo - 1}});
+                pureColorCars.insert(pair<string, vector<int>>{i.bodyColor, vector<int>{i.carNo}});
             }
         }
         else{
-            mixedColorCars.emplace_back(i.carNo-1);
+            mixedColorCars.emplace_back(i.carNo);
         }
     }
 

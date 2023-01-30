@@ -58,6 +58,7 @@ private:
     void pretreatSpeedTrans(vector<int>& type2, vector<int>& type4);
     void greedyObj1InitializePopulation(vector<chromosome> &population);
     void greedyObj2InitializePopulation(vector<chromosome> &population);
+    void greedySortInitializePopulation(vector<chromosome> &population);
     void cross(vector<chromosome>& population);
     void particallyMappedCross(vector<chromosome>& population);
     void mutation(vector<chromosome>& population);

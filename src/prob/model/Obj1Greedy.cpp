@@ -62,13 +62,13 @@ sol Obj1Greedy::generateSolution(){
 
         for (auto i: ins.cars) {
             if (i.type == "A" and i.speedTrans == "两驱") {
-                typeA.emplace_back(i.carNo - 1);
+                typeA.emplace_back(i.carNo);
             } else if (i.type == "A" and i.speedTrans == "四驱") {
-                typeA4.emplace_back(i.carNo - 1);
+                typeA4.emplace_back(i.carNo);
             } else if (i.type == "B" and i.speedTrans == "两驱") {
-                typeB.emplace_back(i.carNo - 1);
+                typeB.emplace_back(i.carNo);
             } else if (i.type == "B" and i.speedTrans == "四驱") {
-                typeB4.emplace_back(i.carNo - 1);
+                typeB4.emplace_back(i.carNo);
             }
         }
 

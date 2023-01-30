@@ -21,7 +21,7 @@ for file_name in namelist:
         sheet = workbook[instanceNo]
         # 读取 csv 文件中的数据
         csv = pd.read_csv(csvfile, dtype=int)
-        rows_num = csv.shape[0]
+        rows_num = min(csv.shape[0], 50)
         cols_num = csv.shape[1]
 
         if rows_num < 50:

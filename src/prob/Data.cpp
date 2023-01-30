@@ -64,7 +64,7 @@ instance Data::getInstance(const string &filePath) {
     ins.cars = {};
     for(auto i: file){
         carInfo c;
-        c.carNo = stoi(i[0]);
+        c.carNo = stoi(i[0]) - 1;
         c.type = i[1];
         c.bodyColor = i[2];
         c.roofColor = i[3];
