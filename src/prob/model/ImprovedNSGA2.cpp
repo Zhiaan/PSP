@@ -36,7 +36,8 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 //        cross(newPopulation);                           // 交叉算子
         particallyMappedCross(newPopulation);           // PMX
 
-        mutation(newPopulation);                        // 变异算子
+        // mutation(newPopulation);                        // 变异算子
+        particallySwapMutation(newPopulation);                        // 变异算子
 
         newPopulation.insert(newPopulation.end(), population.begin(), population.end());    // 老种群与新种群合并
 
@@ -822,36 +823,80 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
 }
 
 void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
+    auto findStartEnd = [&](const vector<int> &sequence, const int &index, int &start, int &end) {
+        while (start - 1 >= 0) {
+            carInfo cur = ins.cars[sequence[start]];
+            carInfo prev = ins.cars[sequence[start - 1]];
+            if (prev.checkNextNotContinuesColor(cur)) {
+                // 颜色不连续
+                break;
+            }
+            --start;
+        }
+        while (end + 1 <= sequence.size() - 1) {
+            carInfo cur = ins.cars[sequence[end]];
+            carInfo next = ins.cars[sequence[end + 1]];
+            if (cur.checkNextNotContinuesColor(next)) {
+                // 颜色不连续
+                break;
+            }
+            ++end;
+        }
+    };
+
     for(int i = 0; i < population.size(); ++i){
-        vector<int>& parent = population[i].sequence;
-        // 生成位置序列（0-1）
-        int oneNum = ::rand() % (parent.size() / 2);    // 变异位置数量
-        vector<int> position(parent.size(), 0);
-        for(int i = 0; i != oneNum; ++i){
-            position[i] = 1;
-        }
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        shuffle(position.begin(), position.end(), default_random_engine(seed));   // 对四驱同类型乱序后分组
+        vector<int> &parent = population[i].sequence;
 
-        // 记录需要变异的元素
-        vector<int> genes = {};
-        for(int i = 0; i != position.size(); ++i){
-            if(position[i] == 1){
-                genes.emplace_back(parent[i]);
-            }
-        }
-        seed = std::chrono::system_clock::now().time_since_epoch().count();
-        shuffle(genes.begin(), genes.end(), default_random_engine(seed));   // 对四驱同类型乱序后分组
+        // parent = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3};
+        // for (auto & p: parent) {
+        //     cout << "(" << ins.cars[p].bodyColor << ", " << ins.cars[p].roofColor << ", " << ins.cars[p].carNo << ") ";
+        // }
+        // cout << endl;
 
-        for(int i = 0, j = 0; j != genes.size(); ++i){      // 重新放回位置
-            if(position[i] == 1){
-                parent[i] = genes[j++];
-            }
+        // 生成两个要交换位置的随机数 index1, index2
+        int index1 = ::rand() % parent.size();
+        // index 落在 [start, end] 区间
+        int start1 = index1, end1 = index1;
+        findStartEnd(parent, index1, start1, end1);
+
+        int index2 = ::rand() % (parent.size() / 2);
+        while (index2 >= start1 && index2 <= end1) {
+            index2 = ::rand() % (parent.size() / 2);
         }
-        chromosome child = chromosome{parent, vector<double>(4, 0)};
-        evaluation(child);         // 更新child参数
-//        population[i] = child.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child;          // 如果为可行解 则保留 否则保留原解
-        population[i] = child;
+        int start2 = index2, end2 = index2;
+        findStartEnd(parent, index2, start2, end2);
+
+        if (start2 < start1) {
+            // 保证 [start1, end1] < [start2, end2]
+            swap(start1, start2);
+            swap(end1, end2);
+        }
+
+        // cout << start2 << " " << end2 << endl;
+
+        // 存储片段
+        vector<int> genes1(parent.begin() + start1, parent.begin() + end1 + 1);
+        vector<int> genes2(parent.begin() + start2, parent.begin() + end2 + 1);
+        vector<int> child1(parent.begin(), parent.begin() + start1);
+        vector<int> child2(parent.begin() + end1 + 1, parent.begin() + start2);
+        vector<int> child3(parent.begin() + end2 + 1, parent.end());
+
+        // cout << genes1.size() + genes2.size() + child1.size() + child2.size() + child3.size() << endl;
+        vector<int> child;
+        child.insert(child.end(), child1.begin(), child1.end());
+        child.insert(child.end(), genes2.begin(), genes2.end());
+        child.insert(child.end(), child2.begin(), child2.end());
+        child.insert(child.end(), genes1.begin(), genes1.end());
+        child.insert(child.end(), child3.begin(), child3.end());
+
+        parent = child;
+        evaluation(population[i]);
+
+        // for (auto & p: parent) {
+        //     cout << "(" << ins.cars[p].bodyColor << ", " << ins.cars[p].roofColor << ", " << ins.cars[p].carNo << ") ";
+        // }
+        // cout << endl;
+        // assert(false);
     }
 }
 
