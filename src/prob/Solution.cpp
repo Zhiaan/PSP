@@ -21,7 +21,7 @@ void Solution::outputCSV() {        // 输出csv
     for(int i = 1; i != stoi(ins.instanceNo.substr(5, ins.instanceNo.size() == 8 ? 3 : 4)) + 1; ++i){
         head += "Variable " + to_string(i) + ",";
     }
-    head += "Objective 1,Objective 2,Objective 3";  // 表头
+    head += "Objective 1,Objective 2,Objective 3,Objective 4";  // 表头
     io.writeCSV(outputPath, head);
 
     // 表内容
@@ -30,7 +30,8 @@ void Solution::outputCSV() {        // 输出csv
         for(auto index: solution.sequence){
             outputSolution += to_string(index) + ",";
         }
-        outputSolution += to_string(solution.obj1) + "," + to_string(solution.obj2) + "," + to_string(solution.obj3);
+        outputSolution += to_string(solution.obj1) + "," + to_string(solution.obj2)
+                + "," + to_string(solution.obj3) + "," + to_string(solution.obj4);
         io.writeCSV(outputPath, outputSolution);
     }
 }
