@@ -22,6 +22,19 @@ struct carInfo{
     string materialNo;  // 物料编号
     string engine;      // 发动机  燃油/混动
     string speedTrans;  // 变速器  四驱/两驱
+
+    inline bool checkRoofNotEqualBody() const {
+        return roofColor != "无对比颜色" and roofColor != bodyColor;
+    }
+
+    inline bool checkBodyNotEqualNextRoof(const carInfo &nextCar) const {
+        return bodyColor != (nextCar.roofColor == "无对比颜色" ? nextCar.bodyColor : nextCar.roofColor);
+    }
+
+    inline bool checkNextNotContinuesColor(const carInfo &nextCar) const {
+        // 相邻两辆车在喷漆过程中若发生了颜色切换就认为颜色不连续。
+        return checkRoofNotEqualBody() or checkBodyNotEqualNextRoof(nextCar) or nextCar.checkRoofNotEqualBody();
+    }
 };
 struct instance{
     string instanceNo;      // 实例编号

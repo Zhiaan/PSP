@@ -83,6 +83,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
     int typeCommonTime = 1;
     int colorCommonTime = 0;
     int speedTransCommonTime = 0;   // 连续四驱次数
+    int obj2Cost = 0;   // obj2惩罚值，限制偏向颜色以 5 的倍数切换生产
     for(int i = 0; i != c.sequence.size() - 1; ++i){
         // 记录四驱连续次数 obj3
         if(ins.cars[c.sequence[i]].speedTrans == "四驱"){
@@ -108,8 +109,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         }
 
         // obj2 切换喷头次数
-        if(ins.cars[c.sequence[i]].roofColor != "无对比颜色" and ins.cars[c.sequence[i]].roofColor != ins.cars[c.sequence[i]].bodyColor){     // 本车车顶颜色!=车身颜色
+        if (ins.cars[c.sequence[i]].checkRoofNotEqualBody()) { // 本车车顶颜色!=车身颜色
             ++c.objs[1];
+            colorCommonTime = 0;
         }
         else{               // 本车车顶颜色=车身颜色
             ++colorCommonTime;
@@ -121,8 +123,11 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
 
         }
         // 如果前车车身!=后车车顶
-        if(ins.cars[c.sequence[i]].bodyColor != (ins.cars[c.sequence[i + 1]].roofColor == "无对比颜色" ? ins.cars[c.sequence[i + 1]].bodyColor : ins.cars[c.sequence[i + 1]].roofColor)){
+        if (ins.cars[c.sequence[i]].checkBodyNotEqualNextRoof(ins.cars[c.sequence[i + 1]])) {
             ++c.objs[1];
+            if (colorCommonTime != 0) {
+                obj2Cost += (5 - colorCommonTime);
+            }
             colorCommonTime = 0;
         }
 
@@ -130,12 +135,17 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
     if(speedTransCommonTime == 3 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
         ++c.objs[2];     // 如果前后不相等 记录总装车间切换次数
     }
-    if(ins.cars[*(c.sequence.end()-1)].roofColor != "无对比颜色" and ins.cars[*(c.sequence.end()-1)].roofColor != ins.cars[*(c.sequence.end()-1)].bodyColor){     // 最后一辆车的车顶颜色!=车身颜色
+    if (ins.cars[c.sequence.size() - 1].checkRoofNotEqualBody()) {
         ++c.objs[1];
+    } else {
+        // 车身车顶颜色相同
+        ++colorCommonTime;
+        obj2Cost += (5 - colorCommonTime);
     }
 
     // obj4
     c.objs[3] += ins.weldingTime * c.sequence.size() + c.objs[1] * ins.paintingWaitingTime + ins.paintingTime * 2 * c.sequence.size() + ins.assembleTime * c.sequence.size();
+    c.objs[1] = obj2Cost;
 }
 
 void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
