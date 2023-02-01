@@ -22,15 +22,15 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 
     for(int iter = 0; iter < maxIter; ++iter){
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
-        int num = 0;
-        for(auto i: population){
-            if(i.rank != 0) break;
-            ++num;
-            for(auto j: i.objs){
-                cout << j << ' ';
-            }cout << endl;
-        }
-        cout << num << endl;
+//        int num = 0;
+//        for(auto i: population){
+//            if(i.rank != 0) break;
+//            ++num;
+//            for(auto j: i.objs){
+//                cout << j << ' ';
+//            }cout << endl;
+//        }
+//        cout << num << endl;
         vector<chromosome> newPopulation = population;      // 生成新种群
 
 //        cross(newPopulation);                           // 交叉算子
@@ -94,6 +94,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             }
         }
         else{
+            if(speedTransCommonTime == 1)   c.objs[2] += 0.5;
             speedTransCommonTime = 0;
         }
 
@@ -112,6 +113,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         // obj2 切换喷头次数
         if (ins.cars[c.sequence[i]].checkRoofNotEqualBody()) { // 本车车顶颜色!=车身颜色
             ++c.objs[1];
+            if (colorCommonTime != 0) {
+                obj2Cost += (5 - colorCommonTime);
+            }
             colorCommonTime = 0;
         }
         else{               // 本车车顶颜色=车身颜色
@@ -136,9 +140,16 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
     if(speedTransCommonTime == 3 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
         ++c.objs[2];     // 如果前后不相等 记录总装车间切换次数
     }
+    else if(speedTransCommonTime == 1 and ins.cars[*(c.sequence.end()-1)].speedTrans == "两驱"){
+        c.objs[2] += 0.5;
+    }
     if (ins.cars[c.sequence.size() - 1].checkRoofNotEqualBody()) {
+        if (colorCommonTime != 0) {
+            obj2Cost += (5 - colorCommonTime);
+        }
         ++c.objs[1];
-    } else {
+    }
+    else {
         // 车身车顶颜色相同
         ++colorCommonTime;
         obj2Cost += (5 - colorCommonTime);
@@ -306,40 +317,53 @@ void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& populatio
     vector<vector<carInfo>> split_cars_A_same_color = to_2d(cars_A_same_color); // final use !!!
     vector<vector<carInfo>> split_cars_B_same_color = to_2d(cars_B_same_color); // final use !!!
 
+    int flag = 0;
     for (auto& chro: population) {
-        vector<carInfo> A_not_same_copy = cars_A_not_same_color; // not split more, final use!!!
-        vector<carInfo> B_not_same_copy = cars_B_not_same_color; // not split more, final use!!!
-        vector<vector<carInfo>> A_same_copy = split_cars_A_same_color; // final use !!!
-        vector<vector<carInfo>> B_same_copy = split_cars_B_same_color; // final use !!!
+        if(flag++ == 0){
+            string filePath1 = "../result/Obj1Greedy/" + ins.instanceNo + ".csv";
+            IO io;
+            vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
+            for(int j = 0; j != chromosomeLength; ++j){
+                chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
+            }
+            evaluation(chro);
+        }
+        else{
+            vector<carInfo> A_not_same_copy = cars_A_not_same_color; // not split more, final use!!!
+            vector<carInfo> B_not_same_copy = cars_B_not_same_color; // not split more, final use!!!
+            vector<vector<carInfo>> A_same_copy = split_cars_A_same_color; // final use !!!
+            vector<vector<carInfo>> B_same_copy = split_cars_B_same_color; // final use !!!
 
 
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        shuffle (A_not_same_copy.begin(), A_not_same_copy.end(), std::default_random_engine(seed));
+            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+            shuffle (A_not_same_copy.begin(), A_not_same_copy.end(), std::default_random_engine(seed));
 
-        seed = std::chrono::system_clock::now().time_since_epoch().count();
-        shuffle (B_not_same_copy.begin(), B_not_same_copy.end(), std::default_random_engine(seed));
-
-        seed = std::chrono::system_clock::now().time_since_epoch().count();
-        shuffle (A_same_copy.begin(), A_same_copy.end(), std::default_random_engine(seed));
-        for (auto &vec : A_same_copy) {
             seed = std::chrono::system_clock::now().time_since_epoch().count();
-            shuffle (vec.begin(), vec.end(), std::default_random_engine(seed));
-        }
+            shuffle (B_not_same_copy.begin(), B_not_same_copy.end(), std::default_random_engine(seed));
 
-        seed = std::chrono::system_clock::now().time_since_epoch().count();
-        shuffle (B_same_copy.begin(), B_same_copy.end(), std::default_random_engine(seed));
-        for (auto &vec : B_same_copy) {
             seed = std::chrono::system_clock::now().time_since_epoch().count();
-            shuffle (vec.begin(), vec.end(), std::default_random_engine(seed));
+            shuffle (A_same_copy.begin(), A_same_copy.end(), std::default_random_engine(seed));
+            for (auto &vec : A_same_copy) {
+                seed = std::chrono::system_clock::now().time_since_epoch().count();
+                shuffle (vec.begin(), vec.end(), std::default_random_engine(seed));
+            }
+
+            seed = std::chrono::system_clock::now().time_since_epoch().count();
+            shuffle (B_same_copy.begin(), B_same_copy.end(), std::default_random_engine(seed));
+            for (auto &vec : B_same_copy) {
+                seed = std::chrono::system_clock::now().time_since_epoch().count();
+                shuffle (vec.begin(), vec.end(), std::default_random_engine(seed));
+            }
+
+            if (::rand() % 2) {
+                // A 放前面
+                emplace_helper(chro, A_same_copy, A_not_same_copy, B_same_copy, B_not_same_copy);
+            } else {
+                // B 放前面
+                emplace_helper(chro, B_same_copy, B_not_same_copy, A_same_copy, A_not_same_copy);
+            }
         }
 
-        if (::rand() % 2) {
-            // A 放前面
-            emplace_helper(chro, A_same_copy, A_not_same_copy, B_same_copy, B_not_same_copy);
-        } else {
-            // B 放前面
-            emplace_helper(chro, B_same_copy, B_not_same_copy, A_same_copy, A_not_same_copy);
-        }
     }
 
     for (auto &p: population) {
