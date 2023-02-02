@@ -20,7 +20,7 @@ for file_name in namelist:
     with open(file_name, 'r', encoding='utf-8') as csvfile:
         sheet = workbook[instanceNo]
         # 读取 csv 文件中的数据
-        csv = pd.read_csv(csvfile, dtype=int)
+        csv = pd.read_csv(csvfile)
         rows_num = min(csv.shape[0], 50)
         cols_num = csv.shape[1]
 

@@ -86,7 +86,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
     int speedTransCommonTime = 0;   // 连续四驱次数
     int obj2Cost = 0;   // obj2惩罚值，限制偏向颜色以 5 的倍数切换生产
     for(int i = 0; i != c.sequence.size() - 1; ++i){
-        // 记录四驱连续次数 obj3
+        // obj3 记录超出4辆连续四驱的惩罚洗漱 以及 一辆四驱的惩罚系数
         if(ins.cars[c.sequence[i]].speedTrans == "四驱"){
             ++speedTransCommonTime;
             if(speedTransCommonTime >= 4){  // 连续四驱数量到4 记录超越次数作为惩罚值obj3
@@ -98,7 +98,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             speedTransCommonTime = 0;
         }
 
-        // obj1 焊装总切换次数
+        // obj1 焊装总切换次数 记录因为不同类型导致的切换次数
         if(ins.cars[c.sequence[i]].type == ins.cars[c.sequence[i + 1]].type){   // 如果前后相等 记录连续相等车数
             ++typeCommonTime;
         }
@@ -110,7 +110,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             typeCommonTime = 1;
         }
 
-        // obj2 切换喷头次数
+        // obj2 记录未达到连续五辆同色车的惩罚系数
         if (ins.cars[c.sequence[i]].checkRoofNotEqualBody()) { // 本车车顶颜色!=车身颜色
             ++c.objs[1];
             if (colorCommonTime != 0) {
