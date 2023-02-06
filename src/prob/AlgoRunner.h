@@ -19,6 +19,7 @@
 #include "model/ImprovedNSGA2.h"
 #include "model/Obj1Greedy.h"
 #include <mutex>
+#include <set>
 using namespace std;
 class AlgoRunner {
 public:

@@ -11,11 +11,11 @@ void AlgoRunner::run(vector<string>& arguments){
 
     IO io;
 
-    const unsigned int numThreads = std::thread::hardware_concurrency();
-//    const unsigned int numThreads = 1;
+//    const unsigned int numThreads = std::thread::hardware_concurrency();
+    const unsigned int numThreads = 1;
     std::vector<std::thread> pool;
-    const int numFiles = filePathList.size();
-//    const int numFiles = 1;
+//    const int numFiles = filePathList.size();
+    const int numFiles = 1;
     int fileId = 0;
     std::mutex mtx;
 
@@ -23,8 +23,8 @@ void AlgoRunner::run(vector<string>& arguments){
         std::thread currentThread([&](const int threadId) {
             mtx.lock();
             while (fileId < numFiles) {
-                string filePath = filePathList[fileId];
-//                string filePath = p.dataPath + "/data_103.csv";
+//                string filePath = filePathList[fileId];
+                string filePath = p.dataPath + "/data_103.csv";
                 ++fileId;
                 mtx.unlock();
 
@@ -90,11 +90,18 @@ void AlgoRunner::processFile(Data &d, Param &p, IO &io, const string &filePathNa
 //    avg2 = sum2 / solutions.size();
 //    avg3 = sum3 / solutions.size();
     string outputSolution;
+    int minObj4 = 99999999;
+    solution minS;
+
+    set<vector<double>> set;
     for(auto& s: solutions){
-        if(s.obj1 == 0){
-            outputSolution = ins.instanceNo + "," + to_string(s.obj1) + "," + to_string(s.obj2) + "," + to_string(s.obj3);
-            break;
+        set.insert(vector<double>{s.obj1, s.obj2, s.obj3, s.obj4});
+        if(s.obj4 < minObj4){
+            minS = s;
+            minObj4 = s.obj4;
         }
     }
+    outputSolution = ins.instanceNo + "," + to_string(minS.obj1) + "," + to_string(minS.obj2) + "," + to_string(minS.obj3) + "," + to_string(minS.obj4) + "," +
+            to_string(set.size());
     io.writeCSV(statisticsPath, outputSolution);
 }
