@@ -7,7 +7,8 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
     populationSize = 500;
     chromosomeLength = ins.cars.size();
-    maxIter = 1000;
+    maxIter = 1400;
+    iter = 0;
 }
 
 vector<solution> ImprovedNSGA2::NSGA2Runner() {
@@ -20,7 +21,12 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     // greedyObj1InitializePopulation(population);     // obj2贪婪算法初始化种群
     // randomInitializePopulation(population);           // 随机初始化种群
 
-    for(int iter = 0; iter < maxIter; ++iter){
+    for(; iter < maxIter; ++iter){
+        if(iter == maxIter / 2){
+            for(auto& chro: population){
+                evaluation(chro);
+            }
+        }
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
 //        int num = 0;
 //        for(auto i: population){
@@ -157,7 +163,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
 
     // obj4
     c.objs[3] += ins.weldingTime * c.sequence.size() + c.objs[1] * ins.paintingWaitingTime + ins.paintingTime * 2 * c.sequence.size() + ins.assembleTime * c.sequence.size();
-    c.objs[1] = obj2Cost;
+    if(iter >= maxIter / 2){
+        c.objs[1] = obj2Cost;
+    }
 }
 
 void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
@@ -799,14 +807,9 @@ void ImprovedNSGA2::particallyMappedCross(vector<chromosome>& population){
 //            swap(parent2[index1], parent2[index2]);
 //        }
 
-//        vector<double> obj = population[i].objs;
+
         evaluation(population[i]);         // 更新child1和child2参数
         evaluation(population[i + 1]);
-//        if(population[i].objs == obj){
-//            cout << "=============" << endl;
-//            for(double k: obj)  cout << k << ' ';
-//            cout << endl;
-//        }
 
     }
 }
