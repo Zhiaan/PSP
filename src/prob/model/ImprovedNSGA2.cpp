@@ -7,7 +7,7 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
     populationSize = 500;
     chromosomeLength = ins.cars.size();
-    maxIter = 1400;
+    maxIter = 1000;
     iter = 0;
 }
 
@@ -1013,13 +1013,6 @@ void ImprovedNSGA2::computeCrowdingDistance(vector<chromosome> &population, vect
     const int needSize = populationSize / 2;
     int sortedSize = 0;
     for (auto &front : fronts) {
-        sortedSize += front.size();
-//        if (sortedSize < needSize) {
-//            continue;
-//        }
-        if (sortedSize == needSize) {
-            break;
-        }
         for (int obj_i = 0; obj_i < objNum; ++obj_i) {
             sort(front.begin(), front.end(), [&](const chromosome &a, const chromosome &b) {
                 return a.objs[obj_i] < b.objs[obj_i];
@@ -1034,7 +1027,10 @@ void ImprovedNSGA2::computeCrowdingDistance(vector<chromosome> &population, vect
                 }
             }
         }
-        break;
+        sortedSize += front.size();
+        if (sortedSize >= needSize) {
+            break;
+        }
     }
 
     population = {};
