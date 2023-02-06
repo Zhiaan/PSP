@@ -850,7 +850,7 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
 }
 
 void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
-    auto findStartEnd = [&](const vector<int> &sequence, const int &index, int &start, int &end) {
+    auto findStartEnd = [&](const vector<int> &sequence, int &start, int &end) {
         while (start - 1 >= 0) {
             carInfo cur = ins.cars[sequence[start]];
             carInfo prev = ins.cars[sequence[start - 1]];
@@ -870,6 +870,21 @@ void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
             ++end;
         }
     };
+    auto getSubRange = [](const int index, int &start, int &end) {
+        // 长度超过 5
+        int newStart = index - 2;
+        int newEnd = index + 2;
+        if (newStart < start) {
+            newEnd += (start - newStart);
+            newStart = start;
+        }
+        if (newEnd > end) {
+            newStart -= (newEnd - end);
+            newEnd = end;
+        }
+        start = newStart;
+        end = newEnd;
+    };
 
     for(int i = 0; i < population.size(); ++i){
         vector<int> &parent = population[i].sequence;
@@ -881,18 +896,33 @@ void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
         // cout << endl;
 
         // 生成两个要交换位置的随机数 index1, index2
-        int index1 = ::rand() % parent.size();
+        const int index1 = ::rand() % parent.size();
         // index 落在 [start, end] 区间
         int start1 = index1, end1 = index1;
-        findStartEnd(parent, index1, start1, end1);
+        findStartEnd(parent, start1, end1);
 
         int index2 = ::rand() % (parent.size() / 2);
-        while (index2 >= start1 && index2 <= end1) {
+        while (index2 == index1) {
             index2 = ::rand() % (parent.size() / 2);
         }
         int start2 = index2, end2 = index2;
-        findStartEnd(parent, index2, start2, end2);
-
+        if (index2 >= start1 && index2 <= end1) {
+            // 落在相同颜色区间里，交换位置
+            start1 = index1, end1 = index1;
+        } else {
+            // 落在颜色不同的区间位置里
+            findStartEnd(parent, start2, end2);
+            int len1 = end1 - start1 + 1;
+            int len2 = end2 - start2 + 1;
+            if (len1 > 5) {
+                // 以 index1 为中心，截取一段
+                getSubRange(index1, start1, end1);
+            }
+            if (len2 > 5) {
+                // 以 index2 为中心，截取一段
+                getSubRange(index2, start2, end2);
+            }
+        }
         if (start2 < start1) {
             // 保证 [start1, end1] < [start2, end2]
             swap(start1, start2);
