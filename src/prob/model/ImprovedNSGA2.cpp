@@ -5,9 +5,9 @@
 #include "ImprovedNSGA2.h"
 ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
-    populationSize = 500;
+    populationSize = 600;
     chromosomeLength = ins.cars.size();
-    maxIter = 1000;
+    maxIter = 1200;
     iter = 0;
 }
 
@@ -34,7 +34,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 //            ++num;
 //            for(auto j: i.objs){
 //                cout << j << ' ';
-//            }cout << endl;
+//            }cout << i.rank << ' ' << i.crowding_distance << endl;
 //        }
 //        cout << num << endl;
         vector<chromosome> newPopulation = population;      // 生成新种群
@@ -163,9 +163,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
 
     // obj4
     c.objs[3] += ins.weldingTime * c.sequence.size() + c.objs[1] * ins.paintingWaitingTime + ins.paintingTime * 2 * c.sequence.size() + ins.assembleTime * c.sequence.size();
-    if(iter >= maxIter / 2){
+//    if(iter >= maxIter / 2){
         c.objs[1] = obj2Cost;
-    }
+//    }
 }
 
 void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
@@ -746,16 +746,8 @@ void ImprovedNSGA2::cross(vector<chromosome>& population) {
             }
         }
 
-        chromosome child1 = chromosome{parent1, vector<double>(4, 0)};
-        chromosome child2 = chromosome{parent2, vector<double>(4, 0)};
-        evaluation(child1);         // 更新child1和child2参数
-        evaluation(child2);
-//        population[i] = child1.objs[0] == std::numeric_limits<double>::infinity() ? population[i] : child1;          // 如果为可行解 则保留 否则保留原解
-//        population[i + 1] = child2.objs[0] == std::numeric_limits<double>::infinity() ? population[i + 1] : child2;
-        population[i] = child1;
-        population[i + 1] = child2;
-
-//        if(population[i].objs[0] == INT_MAX / 2 or population[i+1].objs[0] == INT_MAX / 2)  goto label;     // 必须生成可行解
+        evaluation(population[i]);         // 更新child1和child2参数
+        evaluation(population[i + 1]);
     }
 }
 
@@ -765,7 +757,7 @@ void ImprovedNSGA2::particallyMappedCross(vector<chromosome>& population){
     for(int i = 0; i < population.size(); i += 2){
         vector<int>& parent1 = population[i].sequence;
         vector<int>& parent2 = population[i+1].sequence;
-        if(parent1 != parent2) {
+        if(population[i].objs != population[i+1].objs) {
             // 生成分段位置 交换位置[index1, index2)
             int index1 = ::rand() % parent1.size();
             int index2 = ::rand() % parent1.size();
@@ -799,18 +791,28 @@ void ImprovedNSGA2::particallyMappedCross(vector<chromosome>& population){
                     parent2[j] = map1[key];
                 }
             }
+            evaluation(population[i]);         // 更新child1和child2参数
+            evaluation(population[i + 1]);
         }
-//        else{
-//            int index1 = ::rand() % parent1.size();
-//            int index2 = ::rand() % parent1.size();
-//            swap(parent1[index1], parent1[index2]);
-//            swap(parent2[index1], parent2[index2]);
-//        }
-
-
-        evaluation(population[i]);         // 更新child1和child2参数
-        evaluation(population[i + 1]);
-
+        else{
+            int randNum = ::rand() % 2;
+            if(randNum == 0){
+                int index1 = ::rand() % parent1.size();
+                int index2 = ::rand() % parent1.size();
+                swap(parent1[index1], parent1[index2]);
+                swap(parent2[index1], parent2[index2]);
+                evaluation(population[i]);         // 更新child1和child2参数
+                evaluation(population[i + 1]);
+            }
+            else{
+                vector<chromosome> p1 = {population[i]};
+                vector<chromosome> p2 = {population[i+1]};
+                particallySwapMutation(p1);
+                particallySwapMutation(p2);
+                population[i] = p1[0];
+                population[i+1] = p2[0];
+            }
+        }
     }
 }
 
@@ -901,9 +903,9 @@ void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
         int start1 = index1, end1 = index1;
         findStartEnd(parent, start1, end1);
 
-        int index2 = ::rand() % (parent.size() / 2);
+        int index2 = ::rand() % parent.size();
         while (index2 == index1) {
-            index2 = ::rand() % (parent.size() / 2);
+            index2 = ::rand() % parent.size();
         }
         int start2 = index2, end2 = index2;
         if (index2 >= start1 && index2 <= end1) {
