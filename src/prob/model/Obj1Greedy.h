@@ -11,12 +11,15 @@
 #include <chrono>
 #include <algorithm>
 #include <cmath>
+#include <cassert>
 using namespace std;
 
 struct sol{
     vector<int> sequence;
     double obj0;        // obj0
     double obj1;        // obj1
+    double obj2;
+    double time;        // 总时长
 };
 
 class Obj1Greedy {
@@ -34,6 +37,7 @@ private:
     void mutation(sol& solution);
     void swap1(sol& solution);
     void evaluation(sol &c);
+    void particallySwapMutation(sol& population);
 };
 
 
