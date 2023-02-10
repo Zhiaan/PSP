@@ -7,7 +7,7 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
     populationSize = 600;
     chromosomeLength = ins.cars.size();
-    maxIter = 1200;
+    maxIter = 1000;
     iter = 0;
 }
 
@@ -110,7 +110,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         }
         else{
             ++c.objs[0];     // 如果前后不相等 记录切换次数
-            if(typeCommonTime < ins.weldingContinueTime / ins.weldingTime){     // 如果前后不相等且小于30min 总时长增加
+            if(typeCommonTime * ins.weldingTime < ins.weldingContinueTime){     // 如果前后不相等且小于30min 总时长增加
                 c.objs[3] += ins.weldingContinueTime - typeCommonTime * ins.weldingTime;
             }
             typeCommonTime = 1;
@@ -143,8 +143,11 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         }
 
     }
-    if(speedTransCommonTime == 3 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
+    if(speedTransCommonTime >= 3 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
         ++c.objs[2];     // 如果前后不相等 记录总装车间切换次数
+    }
+    else if(speedTransCommonTime == 0 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
+        c.objs[2] += 0.5;
     }
     else if(speedTransCommonTime == 1 and ins.cars[*(c.sequence.end()-1)].speedTrans == "两驱"){
         c.objs[2] += 0.5;
@@ -757,7 +760,7 @@ void ImprovedNSGA2::particallyMappedCross(vector<chromosome>& population){
     for(int i = 0; i < population.size(); i += 2){
         vector<int>& parent1 = population[i].sequence;
         vector<int>& parent2 = population[i+1].sequence;
-        if(population[i].objs != population[i+1].objs) {
+        if(parent1 != parent2) {
             // 生成分段位置 交换位置[index1, index2)
             int index1 = ::rand() % parent1.size();
             int index2 = ::rand() % parent1.size();
