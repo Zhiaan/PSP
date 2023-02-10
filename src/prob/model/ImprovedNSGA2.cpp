@@ -938,7 +938,11 @@ void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
 
         // 存储片段
         vector<int> genes1(parent.begin() + start1, parent.begin() + end1 + 1);
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle (genes1.begin(), genes1.end(), std::default_random_engine(seed));
         vector<int> genes2(parent.begin() + start2, parent.begin() + end2 + 1);
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle (genes2.begin(), genes2.end(), std::default_random_engine(seed));
         vector<int> child1(parent.begin(), parent.begin() + start1);
         vector<int> child2(parent.begin() + end1 + 1, parent.begin() + start2);
         vector<int> child3(parent.begin() + end2 + 1, parent.end());
