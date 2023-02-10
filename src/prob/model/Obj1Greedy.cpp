@@ -338,7 +338,11 @@ void Obj1Greedy::particallySwapMutation(sol& population){
 
     // 存储片段
     vector<int> genes1(parent.begin() + start1, parent.begin() + end1 + 1);
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    shuffle (genes1.begin(), genes1.end(), std::default_random_engine(seed));
     vector<int> genes2(parent.begin() + start2, parent.begin() + end2 + 1);
+    seed = std::chrono::system_clock::now().time_since_epoch().count();
+    shuffle (genes2.begin(), genes2.end(), std::default_random_engine(seed));
     vector<int> child1(parent.begin(), parent.begin() + start1);
     vector<int> child2(parent.begin() + end1 + 1, parent.begin() + start2);
     vector<int> child3(parent.begin() + end2 + 1, parent.end());
@@ -466,7 +470,7 @@ void Obj1Greedy::evaluation(sol &c) {
         }
         else{
             ++c.obj0;     // 如果前后不相等 记录切换次数
-            if(typeCommonTime < ins.weldingContinueTime / ins.weldingTime){     // 如果前后不相等且小于30min 总时长增加
+            if(typeCommonTime * ins.weldingTime < ins.weldingContinueTime){     // 如果前后不相等且小于30min 总时长增加
                 c.time += ins.weldingContinueTime - typeCommonTime * ins.weldingTime;
             }
             typeCommonTime = 1;
@@ -501,6 +505,9 @@ void Obj1Greedy::evaluation(sol &c) {
     }
     if(speedTransCommonTime == 3 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
         ++c.obj2;     // 如果前后不相等 记录总装车间切换次数
+    }
+    else if(speedTransCommonTime == 0 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
+        c.obj2 += 0.5;
     }
     else if(speedTransCommonTime == 1 and ins.cars[*(c.sequence.end()-1)].speedTrans == "两驱"){
         c.obj2 += 0.5;
