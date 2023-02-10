@@ -14,6 +14,7 @@
 #include <random>
 #include <cassert>
 #include <set>
+#include <unordered_set>
 struct chromosome{
     vector<int> sequence;
     vector<double> objs;        // {obj1, obj2, obj4, obj3}
@@ -63,10 +64,14 @@ private:
     void greedySortInitializePopulation(vector<chromosome> &population);
     void cross(vector<chromosome>& population);
     void particallyMappedCross(vector<chromosome>& population);
+    void particallyMappedCross2(vector<chromosome>& population);
     void mutation(vector<chromosome>& population);
     void particallySwapMutation(vector<chromosome>& population);
     void nondominatedSorting(vector<chromosome>& population);
     void computeCrowdingDistance(vector<chromosome> &population, vector<vector<chromosome>> &fronts);
+
+    // helper func
+    void findStartEnd(const vector<int> &sequence, int &start, int &end) const;
 };
 
 

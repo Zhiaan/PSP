@@ -40,7 +40,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         vector<chromosome> newPopulation = population;      // 生成新种群
 
 //        cross(newPopulation);                           // 交叉算子
-        particallyMappedCross(newPopulation);           // PMX
+        particallyMappedCross2(newPopulation);           // PMX
 
         // mutation(newPopulation);                        // 变异算子
         particallySwapMutation(newPopulation);                        // 变异算子
@@ -819,6 +819,109 @@ void ImprovedNSGA2::particallyMappedCross(vector<chromosome>& population){
     }
 }
 
+static void getSubRange(const int index, int &start, int &end) {
+    // 长度超过 5
+    int newStart = index - 2;
+    int newEnd = index + 2;
+    if (newStart < start) {
+        newEnd += (start - newStart);
+        newStart = start;
+    }
+    if (newEnd > end) {
+        newStart -= (newEnd - end);
+        newEnd = end;
+    }
+    start = newStart;
+    end = newEnd;
+}
+
+void ImprovedNSGA2::particallyMappedCross2(vector<chromosome>& population){
+//    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+//    shuffle(population.begin(), population.end(), default_random_engine(seed));
+    for(int i = 0; i < population.size(); i += 2){
+        vector<int>& parent1 = population[i].sequence;
+        vector<int>& parent2 = population[i+1].sequence;
+        if(parent1 != parent2) {
+            // 生成两个要交换位置的随机数 index1, index2
+            const int index1 = ::rand() % parent1.size();
+            // index 落在 [start, end] 区间
+            int start1 = index1, end1 = index1;
+            findStartEnd(parent1, start1, end1);
+
+            const int index2 = ::rand() % parent1.size();
+            int start2 = index2, end2 = index2;
+            findStartEnd(parent2, start2, end2);
+            int len1 = end1 - start1 + 1;
+            int len2 = end2 - start2 + 1;
+            if (len1 > 5) {
+                // 以 index1 为中心，截取一段
+                getSubRange(index1, start1, end1);
+            }
+            if (len2 > 5) {
+                // 以 index2 为中心，截取一段
+                getSubRange(index2, start2, end2);
+            }
+
+            vector<int> genes1(parent1.begin() + start1, parent1.begin() + end1 + 1);
+            unordered_set<int> genes1_set(genes1.begin(), genes1.end()); // make sure find O(1)
+            vector<int> genes2(parent2.begin() + start2, parent2.begin() + end2 + 1);
+            unordered_set<int> genes2_set(genes2.begin(), genes2.end()); // make sure find O(1)
+            vector<int> child1;
+            vector<int> child2;
+
+            const int insert_pos1 = end1;
+            const int insert_pos2 = end2;
+
+            // 将 genes2 插入 parent1 中
+            for (int i = 0; i < parent1.size(); i++) {
+                if (genes2_set.find(parent1[i]) == genes2_set.end()) {
+                    // 元素跟 genes2 元素不重复
+                    child1.emplace_back(parent1[i]);
+                }
+                if (i == insert_pos1) {
+                    // 插入 genes2
+                    child1.insert(child1.end(), genes2.begin(), genes2.end());
+                }
+            }
+            // 将 genes1 插入 parent2 中
+            for (int i = 0; i < parent2.size(); i++) {
+                if (genes1_set.find(parent2[i]) == genes1_set.end()) {
+                    // 元素跟 genes2 元素不重复
+                    child2.emplace_back(parent2[i]);
+                }
+                if (i == insert_pos2) {
+                    // 插入 genes2
+                    child2.insert(child2.end(), genes1.begin(), genes1.end());
+                }
+            }
+
+            parent1 = child1;
+            parent2 = child2;
+            evaluation(population[i]);
+            evaluation(population[i + 1]);
+        }
+        else{
+            int randNum = ::rand() % 2;
+            if(randNum == 0){
+                int index1 = ::rand() % parent1.size();
+                int index2 = ::rand() % parent1.size();
+                swap(parent1[index1], parent1[index2]);
+                swap(parent2[index1], parent2[index2]);
+                evaluation(population[i]);         // 更新child1和child2参数
+                evaluation(population[i + 1]);
+            }
+            else{
+                vector<chromosome> p1 = {population[i]};
+                vector<chromosome> p2 = {population[i+1]};
+                particallySwapMutation(p1);
+                particallySwapMutation(p2);
+                population[i] = p1[0];
+                population[i+1] = p2[0];
+            }
+        }
+    }
+}
+
 void ImprovedNSGA2::mutation(vector<chromosome> &population) {
     for(int i = 0; i < population.size(); ++i){
         vector<int>& parent = population[i].sequence;
@@ -854,43 +957,28 @@ void ImprovedNSGA2::mutation(vector<chromosome> &population) {
     }
 }
 
-void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
-    auto findStartEnd = [&](const vector<int> &sequence, int &start, int &end) {
-        while (start - 1 >= 0) {
-            carInfo cur = ins.cars[sequence[start]];
-            carInfo prev = ins.cars[sequence[start - 1]];
-            if (prev.checkNextNotContinuesColor(cur)) {
-                // 颜色不连续
-                break;
-            }
-            --start;
+void ImprovedNSGA2::findStartEnd(const vector<int> &sequence, int &start, int &end) const {
+    while (start - 1 >= 0) {
+        carInfo cur = ins.cars[sequence[start]];
+        carInfo prev = ins.cars[sequence[start - 1]];
+        if (prev.checkNextNotContinuesColor(cur)) {
+            // 颜色不连续
+            break;
         }
-        while (end + 1 <= sequence.size() - 1) {
-            carInfo cur = ins.cars[sequence[end]];
-            carInfo next = ins.cars[sequence[end + 1]];
-            if (cur.checkNextNotContinuesColor(next)) {
-                // 颜色不连续
-                break;
-            }
-            ++end;
+        --start;
+    }
+    while (end + 1 <= sequence.size() - 1) {
+        carInfo cur = ins.cars[sequence[end]];
+        carInfo next = ins.cars[sequence[end + 1]];
+        if (cur.checkNextNotContinuesColor(next)) {
+            // 颜色不连续
+            break;
         }
-    };
-    auto getSubRange = [](const int index, int &start, int &end) {
-        // 长度超过 5
-        int newStart = index - 2;
-        int newEnd = index + 2;
-        if (newStart < start) {
-            newEnd += (start - newStart);
-            newStart = start;
-        }
-        if (newEnd > end) {
-            newStart -= (newEnd - end);
-            newEnd = end;
-        }
-        start = newStart;
-        end = newEnd;
-    };
+        ++end;
+    }
+}
 
+void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
     for(int i = 0; i < population.size(); ++i){
         vector<int> &parent = population[i].sequence;
 
