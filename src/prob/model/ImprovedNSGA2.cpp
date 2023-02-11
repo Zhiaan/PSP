@@ -110,7 +110,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
     }
     if(examine != test){
         c.objs[0] = c.objs[1] = c.objs[2]  = c.objs[3] = -1;
-        cout << "error" << endl;
+        cout << "sequence error" << endl;
+        cout << ins.instanceNo << ' ' << iter << endl;
+        cout << examine.size() << ' ' << test.size() << endl;
         return;
     }
 
@@ -344,7 +346,7 @@ void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& populatio
                 }
             }
         } else {
-            cout << "error" << endl;
+            cout << "init error" << endl;
             assert(false);
         }
     };
