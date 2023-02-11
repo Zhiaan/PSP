@@ -16,10 +16,10 @@ using namespace std;
 
 struct sol{
     vector<int> sequence;
-    double obj0;        // obj0
-    double obj1;        // obj1
-    double obj2;
-    double time;        // 总时长
+    long long obj0;        // obj0
+    long long obj1;        // obj1
+    long long obj2;
+    long long time;        // 总时长
 };
 
 class Obj1Greedy {

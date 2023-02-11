@@ -93,15 +93,15 @@ void AlgoRunner::processFile(Data &d, Param &p, IO &io, const string &filePathNa
     int minObj4 = 99999999;
     solution minS;
 
-    set<vector<double>> set;
+    set<vector<long long>> set;
     for(auto& s: solutions){
-        set.insert(vector<double>{s.obj1, s.obj2, s.obj3, s.obj4});
+        set.insert(vector<long long>{s.obj1, s.obj2, s.obj3, s.obj4});
         if(s.obj4 < minObj4){
             minS = s;
             minObj4 = s.obj4;
         }
     }
-    outputSolution = ins.instanceNo + "," + to_string(minS.obj1) + "," + to_string(minS.obj2) + "," + to_string(minS.obj3) + "," + to_string(minS.obj4) + "," +
+    outputSolution = ins.instanceNo + "," + to_string(minS.obj1) + "," + to_string(minS.obj2) + "," + to_string(minS.obj2 >> 41) + "," + to_string(minS.obj3) + "," + to_string(minS.obj4) + "," +
             to_string(set.size());
     io.writeCSV(statisticsPath, outputSolution);
 }

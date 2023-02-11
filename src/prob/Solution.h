@@ -12,10 +12,10 @@
 using namespace std;
 struct solution{
     vector<int> sequence;   // 从0开始
-    double obj1;        // 焊装切换次数
-    double obj2;        // 涂装闲置时间
-    double obj3;        // 四驱连续惩罚
-    double obj4;        // 总时长
+    long long obj1;        // 焊装切换次数
+    long long obj2;        // 涂装闲置时间
+    long long obj3;        // 四驱连续惩罚
+    long long obj4;        // 总时长
 };
 
 class Solution {

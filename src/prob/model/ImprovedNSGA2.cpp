@@ -7,7 +7,7 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
     populationSize = 600;
     chromosomeLength = ins.cars.size();
-    crossTime = 10;
+    crossTime = 5;
     maxIter = 1000;
     iter = 0;
 }
@@ -42,7 +42,8 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         vector<chromosome> newPopulation = population;      // 生成新种群
 
 //        cross(newPopulation);                           // 交叉算子
-        colorCommonCross(newPopulation);           // PMX
+        colorCommonCross(newPopulation);           // 颜色相同交叉
+//        particallyMappedCross(newPopulation);       // PMX
 
         // mutation(newPopulation);                        // 变异算子
         particallySwapMutation(newPopulation);                        // 变异算子
@@ -64,7 +65,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         s.obj3 = i.objs[2];
         s.obj4 = i.objs[3];
         solutions.emplace_back(s);
-        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << ' ' << i.objs[3] << ' ' << i.rank  << ' ' << i.crowding_distance  << endl;
+        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << ' ' << (i.objs[2] >> 41) << ' ' << i.objs[3] << ' ' << i.rank  << ' ' << i.crowding_distance  << endl;
 
         // for (auto j: i.sequence) {
         //     cout << j << ' ';
@@ -222,7 +223,7 @@ void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
         shuffle (chro.sequence.begin(), chro.sequence.end(), std::default_random_engine(seed));
 
         // 计算目标值
-        chro.objs = vector<double>(4, 0);
+        chro.objs = vector<long long>(4, 0);
         evaluation(chro);
 //        if(chro.objs[0] == std::numeric_limits<double>::infinity())  goto label;     // 生成可行解 不可行解重新生成
 
