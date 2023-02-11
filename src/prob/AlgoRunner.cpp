@@ -24,7 +24,7 @@ void AlgoRunner::run(vector<string>& arguments){
             mtx.lock();
             while (fileId < numFiles) {
                 string filePath = filePathList[fileId];
-//                string filePath = p.dataPath + "/data_103.csv";
+//                string filePath = p.dataPath + "/data_130.csv";
                 ++fileId;
                 mtx.unlock();
 
@@ -91,7 +91,9 @@ void AlgoRunner::processFile(Data &d, Param &p, IO &io, const string &filePathNa
 //    avg3 = sum3 / solutions.size();
     string outputSolution;
     int minObj4 = 99999999;
+    int maxObj4 = -1;
     solution minS;
+    solution maxS;
 
     set<vector<long long>> set;
     for(auto& s: solutions){
@@ -100,8 +102,13 @@ void AlgoRunner::processFile(Data &d, Param &p, IO &io, const string &filePathNa
             minS = s;
             minObj4 = s.obj4;
         }
+        if(s.obj4 > maxObj4){
+            maxS = s;
+            maxObj4 = s.obj4;
+        }
     }
-    outputSolution = ins.instanceNo + "," + to_string(minS.obj1) + "," + to_string(minS.obj2) + "," + to_string(minS.obj2 >> 41) + "," + to_string(minS.obj3) + "," + to_string(minS.obj4) + "," +
-            to_string(set.size());
+    outputSolution = ins.instanceNo + "," + to_string(minS.obj1) + "," + to_string(minS.obj2)
+            + "," + to_string(minS.obj2 >> 41) + "," + to_string(minS.obj3) + "," + to_string(minS.obj4)
+            + "," + to_string(maxS.obj4) + ',' + to_string(set.size());
     io.writeCSV(statisticsPath, outputSolution);
 }
