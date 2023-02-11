@@ -7,9 +7,9 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
     populationSize = 600;
     chromosomeLength = ins.cars.size();
-    crossTime = 5;
     maxIter = 1000;
     iter = 0;
+    crossTime = 1;
 }
 
 vector<solution> ImprovedNSGA2::NSGA2Runner() {
@@ -23,7 +23,6 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 //     randomInitializePopulation(population);           // 随机初始化种群
 
     for(; iter < maxIter; ++iter){
-
         if(iter == maxIter / 2){
             for(auto& chro: population){
                 evaluation(chro);
@@ -65,7 +64,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         s.obj3 = i.objs[2];
         s.obj4 = i.objs[3];
         solutions.emplace_back(s);
-        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << i.objs[2] << ' ' << (i.objs[2] >> 41) << ' ' << i.objs[3] << ' ' << i.rank  << ' ' << i.crowding_distance  << endl;
+        cout << i.objs[0] << ' ' << i.objs[1] << ' ' << (i.objs[1] >> 41) << ' ' << i.objs[2] << ' ' << i.objs[3] << ' ' << i.rank  << ' ' << i.crowding_distance  << endl;
 
         // for (auto j: i.sequence) {
         //     cout << j << ' ';
