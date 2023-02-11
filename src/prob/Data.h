@@ -39,11 +39,11 @@ struct carInfo{
 struct instance{
     string instanceNo;      // 实例编号
     vector<carInfo> cars;
-    double weldingTime = 80.0;  // 焊装时间/车
-    double weldingContinueTime = 30 * 60;   // 焊装持续时间30min
-    double paintingTime = 40.0; //车顶/车身涂装时间
-    double paintingWaitingTime = 80.0;  // 涂装切换时间
-    double assembleTime = 80.0;     // 总装时间/车
+    long long weldingTime = 80.0;  // 焊装时间/车
+    long long weldingContinueTime = 30 * 60;   // 焊装持续时间30min
+    long long paintingTime = 40.0; //车顶/车身涂装时间
+    long long paintingWaitingTime = 80.0;  // 涂装切换时间
+    long long assembleTime = 80.0;     // 总装时间/车
     int threadId; // 当前处理这个 instance 的线程号，方便输出调试
 };
 
