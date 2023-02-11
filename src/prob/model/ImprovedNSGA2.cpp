@@ -112,7 +112,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         c.objs[0] = c.objs[1] = c.objs[2]  = c.objs[3] = -1;
         cout << "sequence error" << endl;
         cout << ins.instanceNo << ' ' << iter << endl;
-        cout << examine.size() << ' ' << test.size() << endl;
+        for(int i = 0; i != test.size(); ++i){
+            if(test[i] != examine[i])   cout << test[i-1] << ' ' << test[i] << ' ' << test[i+1] << endl;
+        }
         return;
     }
 
@@ -152,7 +154,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             ++c.objs[1];
             if (colorCommonTime != 0) {
                 obj2Cost += (5 - colorCommonTime);
-                ++obj2Count[colorCommonTime - 2];
+                if(colorCommonTime != 1){
+                    ++obj2Count[colorCommonTime - 2];
+                }
             }
             colorCommonTime = 0;
         }
@@ -160,7 +164,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             ++colorCommonTime;
             if(colorCommonTime == 5){       // 如果五辆车颜色相同
                 ++c.objs[1];
-                ++obj2Count[colorCommonTime - 2];
+                if(colorCommonTime != 1){
+                    ++obj2Count[colorCommonTime - 2];
+                }
                 colorCommonTime = 0;
                 continue;
             }
@@ -171,7 +177,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             ++c.objs[1];
             if (colorCommonTime != 0) {
                 obj2Cost += (5 - colorCommonTime);
-                ++obj2Count[colorCommonTime - 2];
+                if(colorCommonTime != 1){
+                    ++obj2Count[colorCommonTime - 2];
+                }
             }
             colorCommonTime = 0;
         }
@@ -192,7 +200,9 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         ++c.objs[1];
         if (colorCommonTime != 0) {
             obj2Cost += (5 - colorCommonTime);
-            ++obj2Count[colorCommonTime - 2];
+            if(colorCommonTime != 1){
+                ++obj2Count[colorCommonTime - 2];
+            }
         }
     }
     else {
