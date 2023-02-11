@@ -74,6 +74,31 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     return solutions;
 }
 
+// 二进制格式表示如下
+// 0-10 位二进制数表示连续次数为2的数量，范围为 0-2047
+// 11-20 位二进制数表示连续次数为3的数量，范围为 0-1023
+// 21-30 位二进制数表示连续次数为4的数量，范围为 0-1023
+// 31-40 位二进制数表示连续次数为5的数量，范围为 0-1023
+// 41-54 位二进制数表示惩罚值，范围为 0~16384，但是惩罚值越小越好。
+// 需要共计 55 位数表示
+// 取负数可以用 (~num) + 1
+const int binary[5] = {
+    0,
+    11,
+    21,
+    31,
+    41,
+};
+
+long long computeObj2(vector<long long> &obj2Count) {
+    long long obj2 = 0;
+    for (int i = 0; i < obj2Count.size() - 1; i++) {
+        obj2 += (obj2Count[i] << binary[i]);
+    }
+    obj2 = ((obj2Count.back() + 1) << binary[4]) - obj2;
+    return obj2;
+}
+
 void ImprovedNSGA2::evaluation(chromosome &c) {
     c.objs = vector<long long>(4, 0);  // 四目标值归零
     vector<int> test = c.sequence;
@@ -179,7 +204,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
     // obj4
     c.objs[3] += ins.weldingTime * c.sequence.size() + c.objs[1] * ins.paintingWaitingTime + ins.paintingTime * 2 * c.sequence.size() + ins.assembleTime * c.sequence.size();
 //    if(iter >= maxIter / 2){
-    c.objs[1] = obj2Cost;
+    c.objs[1] = computeObj2(obj2Count);
 //    }
 
 
