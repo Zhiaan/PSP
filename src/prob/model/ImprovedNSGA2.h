@@ -17,7 +17,7 @@
 #include <unordered_set>
 struct chromosome{
     vector<int> sequence;
-    vector<double> objs;        // {obj1, obj2, obj4, obj3}
+    vector<long long> objs;        // {obj1, obj2, obj3, obj4}
     int rank;
     double crowding_distance;
 
@@ -52,6 +52,7 @@ public:
     int chromosomeLength;   // 染色体长度/基因数量
     int maxIter;        // 最大迭代次数
     int iter;       // 目前迭代次数
+    int crossTime;  // cross重复次数
     static bool cmp(int a, int b);
     static bool cmp1(pair<int, int> a, pair<int, int> b);
 private:
@@ -64,7 +65,7 @@ private:
     void greedySortInitializePopulation(vector<chromosome> &population);
     void cross(vector<chromosome>& population);
     void particallyMappedCross(vector<chromosome>& population);
-    void particallyMappedCross2(vector<chromosome>& population);
+    void colorCommonCross(vector<chromosome>& population);
     void mutation(vector<chromosome>& population);
     void particallySwapMutation(vector<chromosome>& population);
     void nondominatedSorting(vector<chromosome>& population);

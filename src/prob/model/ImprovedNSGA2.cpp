@@ -7,6 +7,7 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
     populationSize = 600;
     chromosomeLength = ins.cars.size();
+    crossTime = 10;
     maxIter = 1000;
     iter = 0;
 }
@@ -18,10 +19,11 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 
     // 生成初始解
     greedySortInitializePopulation(population);
-    // greedyObj1InitializePopulation(population);     // obj2贪婪算法初始化种群
-    // randomInitializePopulation(population);           // 随机初始化种群
+//     greedyObj1InitializePopulation(population);     // obj2贪婪算法初始化种群
+//     randomInitializePopulation(population);           // 随机初始化种群
 
     for(; iter < maxIter; ++iter){
+
         if(iter == maxIter / 2){
             for(auto& chro: population){
                 evaluation(chro);
@@ -40,7 +42,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         vector<chromosome> newPopulation = population;      // 生成新种群
 
 //        cross(newPopulation);                           // 交叉算子
-        particallyMappedCross2(newPopulation);           // PMX
+        colorCommonCross(newPopulation);           // PMX
 
         // mutation(newPopulation);                        // 变异算子
         particallySwapMutation(newPopulation);                        // 变异算子
@@ -73,7 +75,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 }
 
 void ImprovedNSGA2::evaluation(chromosome &c) {
-    c.objs = vector<double>(4, 0);  // 四目标值归零
+    c.objs = vector<long long>(4, 0);  // 四目标值归零
     vector<int> test = c.sequence;
     sort(test.begin(), test.end());
     vector<int> examine(ins.cars.size());
@@ -86,21 +88,22 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         return;
     }
 
-
     int typeCommonTime = 1;
     int colorCommonTime = 0;
     int speedTransCommonTime = 0;   // 连续四驱次数
-    int obj2Cost = 0;   // obj2惩罚值，限制偏向颜色以 5 的倍数切换生产
+    vector<long long> obj2Count(5);       // 相同颜色统计值{0:连续为2的个数 1:连续为3的个数 2:连续为4的个数 3:连续为5的个数 惩罚值}
+    long long& obj2Cost = obj2Count[4];
+
     for(int i = 0; i != c.sequence.size() - 1; ++i){
         // obj3 记录超出4辆连续四驱的惩罚洗漱 以及 一辆四驱的惩罚系数
         if(ins.cars[c.sequence[i]].speedTrans == "四驱"){
             ++speedTransCommonTime;
             if(speedTransCommonTime >= 4){  // 连续四驱数量到4 记录超越次数作为惩罚值obj3
-                ++c.objs[2];
+                c.objs[2] += 2;
             }
         }
         else{
-            if(speedTransCommonTime == 1)   c.objs[2] += 0.5;
+            if(speedTransCommonTime == 1)   c.objs[2] += 1;
             speedTransCommonTime = 0;
         }
 
@@ -121,6 +124,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             ++c.objs[1];
             if (colorCommonTime != 0) {
                 obj2Cost += (5 - colorCommonTime);
+                ++obj2Count[colorCommonTime - 2];
             }
             colorCommonTime = 0;
         }
@@ -128,6 +132,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             ++colorCommonTime;
             if(colorCommonTime == 5){       // 如果五辆车颜色相同
                 ++c.objs[1];
+                ++obj2Count[colorCommonTime - 2];
                 colorCommonTime = 0;
                 continue;
             }
@@ -138,37 +143,46 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             ++c.objs[1];
             if (colorCommonTime != 0) {
                 obj2Cost += (5 - colorCommonTime);
+                ++obj2Count[colorCommonTime - 2];
             }
             colorCommonTime = 0;
         }
 
     }
-    if(speedTransCommonTime >= 3 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
-        ++c.objs[2];     // 如果前后不相等 记录总装车间切换次数
+    if(speedTransCommonTime >= 3 and ins.cars[c.sequence.back()].speedTrans == "四驱"){
+        c.objs[2] += 2;     // 如果前后不相等 记录总装车间切换次数
     }
-    else if(speedTransCommonTime == 0 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
-        c.objs[2] += 0.5;
+    else if(speedTransCommonTime == 0 and ins.cars[c.sequence.back()].speedTrans == "四驱"){
+        c.objs[2] += 1;
     }
-    else if(speedTransCommonTime == 1 and ins.cars[*(c.sequence.end()-1)].speedTrans == "两驱"){
-        c.objs[2] += 0.5;
+    else if(speedTransCommonTime == 1 and ins.cars[c.sequence.back()].speedTrans == "两驱"){
+        c.objs[2] += 1;
     }
-    if (ins.cars[c.sequence.size() - 1].checkRoofNotEqualBody()) {
+
+
+    if (ins.cars[c.sequence.back()].checkRoofNotEqualBody()) {
+        ++c.objs[1];
         if (colorCommonTime != 0) {
             obj2Cost += (5 - colorCommonTime);
+            ++obj2Count[colorCommonTime - 2];
         }
-        ++c.objs[1];
     }
     else {
         // 车身车顶颜色相同
         ++colorCommonTime;
+        if(colorCommonTime != 1){
+            ++obj2Count[colorCommonTime - 2];
+        }
         obj2Cost += (5 - colorCommonTime);
     }
 
     // obj4
     c.objs[3] += ins.weldingTime * c.sequence.size() + c.objs[1] * ins.paintingWaitingTime + ins.paintingTime * 2 * c.sequence.size() + ins.assembleTime * c.sequence.size();
 //    if(iter >= maxIter / 2){
-        c.objs[1] = obj2Cost;
+    c.objs[1] = obj2Cost;
 //    }
+
+
 }
 
 void ImprovedNSGA2::randomInitializePopulation(vector<chromosome>& population) {
@@ -835,67 +849,70 @@ static void getSubRange(const int index, int &start, int &end) {
     end = newEnd;
 }
 
-void ImprovedNSGA2::particallyMappedCross2(vector<chromosome>& population){
+void ImprovedNSGA2::colorCommonCross(vector<chromosome>& population){
 //    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 //    shuffle(population.begin(), population.end(), default_random_engine(seed));
     for(int i = 0; i < population.size(); i += 2){
-        vector<int>& parent1 = population[i].sequence;
-        vector<int>& parent2 = population[i+1].sequence;
-        // 生成两个要交换位置的随机数 index1, index2
-        const int index1 = ::rand() % parent1.size();
-        // index 落在 [start, end] 区间
-        int start1 = index1, end1 = index1;
-        findStartEnd(parent1, start1, end1);
+        for(int j = 0; j != crossTime; ++j){
+            vector<int>& parent1 = population[i].sequence;
+            vector<int>& parent2 = population[i+1].sequence;
+            // 生成两个要交换位置的随机数 index1, index2
+            const int index1 = ::rand() % parent1.size();
+            // index 落在 [start, end] 区间
+            int start1 = index1, end1 = index1;
+            findStartEnd(parent1, start1, end1);
 
-        const int index2 = ::rand() % parent1.size();
-        int start2 = index2, end2 = index2;
-        findStartEnd(parent2, start2, end2);
-        int len1 = end1 - start1 + 1;
-        int len2 = end2 - start2 + 1;
-        if (len1 > 5) {
-            // 以 index1 为中心，截取一段
-            getSubRange(index1, start1, end1);
-        }
-        if (len2 > 5) {
-            // 以 index2 为中心，截取一段
-            getSubRange(index2, start2, end2);
-        }
-
-        vector<int> genes1(parent1.begin() + start1, parent1.begin() + end1 + 1);
-        unordered_set<int> genes1_set(genes1.begin(), genes1.end()); // make sure find O(1)
-        vector<int> genes2(parent2.begin() + start2, parent2.begin() + end2 + 1);
-        unordered_set<int> genes2_set(genes2.begin(), genes2.end()); // make sure find O(1)
-        vector<int> child1;
-        vector<int> child2;
-
-        const int insert_pos1 = end1;
-        const int insert_pos2 = end2;
-
-        // 将 genes2 插入 parent1 中
-        for (int i = 0; i < parent1.size(); i++) {
-            if (genes2_set.find(parent1[i]) == genes2_set.end()) {
-                // 元素跟 genes2 元素不重复
-                child1.emplace_back(parent1[i]);
+            const int index2 = ::rand() % parent1.size();
+            int start2 = index2, end2 = index2;
+            findStartEnd(parent2, start2, end2);
+            int len1 = end1 - start1 + 1;
+            int len2 = end2 - start2 + 1;
+            if (len1 > 5) {
+                // 以 index1 为中心，截取一段
+                getSubRange(index1, start1, end1);
             }
-            if (i == insert_pos1) {
-                // 插入 genes2
-                child1.insert(child1.end(), genes2.begin(), genes2.end());
+            if (len2 > 5) {
+                // 以 index2 为中心，截取一段
+                getSubRange(index2, start2, end2);
             }
-        }
-        // 将 genes1 插入 parent2 中
-        for (int i = 0; i < parent2.size(); i++) {
-            if (genes1_set.find(parent2[i]) == genes1_set.end()) {
-                // 元素跟 genes2 元素不重复
-                child2.emplace_back(parent2[i]);
+
+            vector<int> genes1(parent1.begin() + start1, parent1.begin() + end1 + 1);
+            unordered_set<int> genes1_set(genes1.begin(), genes1.end()); // make sure find O(1)
+            vector<int> genes2(parent2.begin() + start2, parent2.begin() + end2 + 1);
+            unordered_set<int> genes2_set(genes2.begin(), genes2.end()); // make sure find O(1)
+            vector<int> child1;
+            vector<int> child2;
+
+            const int insert_pos1 = end1;
+            const int insert_pos2 = end2;
+
+            // 将 genes2 插入 parent1 中
+            for (int i = 0; i < parent1.size(); i++) {
+                if (genes2_set.find(parent1[i]) == genes2_set.end()) {
+                    // 元素跟 genes2 元素不重复
+                    child1.emplace_back(parent1[i]);
+                }
+                if (i == insert_pos1) {
+                    // 插入 genes2
+                    child1.insert(child1.end(), genes2.begin(), genes2.end());
+                }
             }
-            if (i == insert_pos2) {
-                // 插入 genes2
-                child2.insert(child2.end(), genes1.begin(), genes1.end());
+            // 将 genes1 插入 parent2 中
+            for (int i = 0; i < parent2.size(); i++) {
+                if (genes1_set.find(parent2[i]) == genes1_set.end()) {
+                    // 元素跟 genes2 元素不重复
+                    child2.emplace_back(parent2[i]);
+                }
+                if (i == insert_pos2) {
+                    // 插入 genes2
+                    child2.insert(child2.end(), genes1.begin(), genes1.end());
+                }
             }
+
+            parent1 = child1;
+            parent2 = child2;
         }
 
-        parent1 = child1;
-        parent2 = child2;
         evaluation(population[i]);
         evaluation(population[i + 1]);
 
