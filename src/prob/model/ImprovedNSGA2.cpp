@@ -265,6 +265,8 @@ void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& populatio
     };
     auto to_2d = [](vector<carInfo> &cars_same_color) -> vector<vector<carInfo>> {
         vector<vector<carInfo>> saved_cars_same_color;
+        if (cars_same_color.empty())
+            return saved_cars_same_color;
         vector<carInfo> temp;
         int i;
         for (i = 0; i < cars_same_color.size() - 1; ++i) {
