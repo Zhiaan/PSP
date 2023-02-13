@@ -184,6 +184,11 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
         }
 
     }
+
+    if(typeCommonTime * ins.weldingTime < ins.weldingContinueTime){     // 如果前后不相等且小于30min 总时长增加
+        c.objs[3] += ins.weldingContinueTime - typeCommonTime * ins.weldingTime;
+    }
+
     if(speedTransCommonTime >= 3 and ins.cars[c.sequence.back()].speedTrans == "四驱"){
         c.objs[2] += 2;     // 如果前后不相等 记录总装车间切换次数
     }
