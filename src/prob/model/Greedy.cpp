@@ -83,7 +83,7 @@ void Greedy::evaluation(solution &s) {
             speedTransCommonTime = 0;
         }
 
-        // obj1 焊装总等待时间
+        // obj2 焊装总等待时间
         if(ins.cars[s.sequence[i]].type == ins.cars[s.sequence[i + 1]].type){   // 如果前后相等 记录连续相等车数
             ++typeCommonTime;
         }
@@ -94,7 +94,7 @@ void Greedy::evaluation(solution &s) {
             typeCommonTime = 1;
         }
 
-        // obj2 切换喷头次数
+        // obj3 切换喷头次数
         if(ins.cars[s.sequence[i]].roofColor != "无对比颜色" and ins.cars[s.sequence[i]].roofColor != ins.cars[s.sequence[i]].bodyColor){     // 本车车顶颜色!=车身颜色
             ++s.obj2;
         }

@@ -5,11 +5,11 @@
 #include "ImprovedNSGA2.h"
 ImprovedNSGA2::ImprovedNSGA2(instance inst) {
     ins = inst;
-    populationSize = 600;
+    populationSize = 1000;
     chromosomeLength = ins.cars.size();
-    maxIter = 1000;
+    maxIter = 2000;
     iter = 0;
-    crossTime = 1;
+    crossTime = ins.cars.size() / 1000 + 1;
 }
 
 vector<solution> ImprovedNSGA2::NSGA2Runner() {
@@ -52,6 +52,18 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         nondominatedSorting(newPopulation);     // 非支配排序
         population.clear();
         population.insert(population.begin(), newPopulation.begin(), newPopulation.begin() + populationSize);
+//        for(auto j: population){
+//            for(auto k: j.sequence){
+//                cout << ins.cars[k].type << " ";
+//            }cout << endl;
+//            for(auto k: j.sequence){
+//                cout << (ins.cars[k].roofColor == "无对比颜色" ? ins.cars[k].bodyColor : ins.cars[k].roofColor) << "/" << ins.cars[k].bodyColor << ' ';
+//            }cout << endl;
+//            for(auto k: j.sequence){
+//                cout << ins.cars[k].speedTrans << " ";
+//            }cout << endl;
+//            cout << j.objs[0] << ' ' << j.objs[1] << ' ' << (j.objs[1]>>41) << ' ' << j.objs[2] << ' ' << j.objs[3] <<  endl;
+//        }
 
     }
 
@@ -124,7 +136,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
     long long& obj2Cost = obj2Count[4];
 
     for(int i = 0; i != c.sequence.size() - 1; ++i){
-        // obj3 记录超出4辆连续四驱的惩罚洗漱 以及 一辆四驱的惩罚系数
+        // obj3 记录超出4辆连续四驱的惩罚系数 以及 一辆四驱的惩罚系数
         if(ins.cars[c.sequence[i]].speedTrans == "四驱"){
             ++speedTransCommonTime;
             if(speedTransCommonTime >= 4){  // 连续四驱数量到4 记录超越次数作为惩罚值obj3
@@ -136,7 +148,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             speedTransCommonTime = 0;
         }
 
-        // obj1 焊装总切换次数 记录因为不同类型导致的切换次数
+        // obj2 焊装总切换次数 记录因为不同类型导致的切换次数
         if(ins.cars[c.sequence[i]].type == ins.cars[c.sequence[i + 1]].type){   // 如果前后相等 记录连续相等车数
             ++typeCommonTime;
         }
@@ -148,7 +160,7 @@ void ImprovedNSGA2::evaluation(chromosome &c) {
             typeCommonTime = 1;
         }
 
-        // obj2 记录未达到连续五辆同色车的惩罚系数
+        // obj3 记录未达到连续五辆同色车的惩罚系数
         if (ins.cars[c.sequence[i]].checkRoofNotEqualBody()) { // 本车车顶颜色!=车身颜色
             ++c.objs[1];
             if (colorCommonTime != 0) {
@@ -389,7 +401,7 @@ void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& populatio
     int flag = 0;
     for (auto& chro: population) {
         if(flag++ == 0){
-            string filePath1 = "../result/Obj1Greedy/" + ins.instanceNo + ".csv";
+            string filePath1 = "../result/Obj4Greedy/" + ins.instanceNo + ".csv";
             IO io;
             vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
             for(int j = 0; j != chromosomeLength; ++j){
@@ -449,7 +461,7 @@ void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& populatio
 }
 
 void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &population){
-    string filePath1 = "../result/Obj1Greedy/" + ins.instanceNo + ".csv";
+    string filePath1 = "../result/Obj4Greedy/" + ins.instanceNo + ".csv";
     string filePath2 = "../result/Obj2Greedy/" + ins.instanceNo + ".csv";
     IO io;
     vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
@@ -541,7 +553,7 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 //            evaluation(chro);
 
         chro.sequence.clear();
-        // obj1
+        // obj2
         vector<int> typeA = {};
         vector<int> typeA4 = {};
         vector<int> typeB = {};
@@ -620,7 +632,7 @@ void ImprovedNSGA2::greedyObj1InitializePopulation(vector<chromosome> &populatio
 //    for(auto& chro: population) {
 //        do {
 //            chro.sequence.clear();
-//            // obj1
+//            // obj2
 //            vector<int> typeA = {};
 //            vector<int> typeA4 = {};
 //            vector<int> typeB = {};

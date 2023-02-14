@@ -3,16 +3,16 @@
 //
 
 #include <random>
-#include "Obj1Greedy.h"
+#include "Obj4Greedy.h"
 
-Obj1Greedy::Obj1Greedy(instance inst) {
+Obj4Greedy::Obj4Greedy(instance inst) {
     ins = inst;
     sequenceLength = ins.cars.size();
     neighborSize = 500;
     maxIterTime = 200;
 }
 
-vector<solution> Obj1Greedy::Obj1GreedyRunner() {
+vector<solution> Obj4Greedy::Obj4GreedyRunner() {
     vector<solution> solutions;
 
     sol globalBestSolution;
@@ -24,47 +24,47 @@ vector<solution> Obj1Greedy::Obj1GreedyRunner() {
     while(true){
         printf("current threadId: %d, current instance: %s, flag: %d\n", ins.threadId, ins.instanceNo.c_str(), flag);
         sol bestNeighbor;
-        bestNeighbor.time = std::numeric_limits<double>::infinity();
+        bestNeighbor.obj4 = std::numeric_limits<double>::infinity();
         for(int j = 0; j != neighborSize; ++j){
             sol neighbor = localBestSolution;
 //            mutation(neighbor);
 //            swap1(neighbor);
             particallySwapMutation(neighbor);
-            if(neighbor.time < bestNeighbor.time \
-            or neighbor.time == bestNeighbor.time and neighbor.obj0 < bestNeighbor.obj0 and neighbor.obj1 < bestNeighbor.obj1 and neighbor.obj2 < bestNeighbor.obj2)   bestNeighbor = neighbor;
+            if(neighbor.obj4 < bestNeighbor.obj4 \
+ or neighbor.obj4 == bestNeighbor.obj4 and neighbor.obj1 < bestNeighbor.obj1 and neighbor.obj2 < bestNeighbor.obj2 and neighbor.obj3 < bestNeighbor.obj3) bestNeighbor = neighbor;
 
-//            cout << neighbor.time << ' ' << bestNeighbor.time << endl;
+//            cout << neighbor.obj4 << ' ' << bestNeighbor.obj4 << endl;
         }
         localBestSolution = bestNeighbor;
-        if(bestNeighbor.time < globalBestSolution.time
-        or bestNeighbor.time == globalBestSolution.time and bestNeighbor.obj0 < globalBestSolution.obj0 and bestNeighbor.obj1 < globalBestSolution.obj1 and bestNeighbor.obj2 < globalBestSolution.obj2) {
+        if(bestNeighbor.obj4 < globalBestSolution.obj4
+        or bestNeighbor.obj4 == globalBestSolution.obj4 and bestNeighbor.obj1 < globalBestSolution.obj1 and bestNeighbor.obj2 < globalBestSolution.obj2 and bestNeighbor.obj3 < globalBestSolution.obj3) {
             globalBestSolution = bestNeighbor;
             flag = 0;
         }
         else{
             ++flag;
         }
-//        cout << localBestSolution.obj1 << ' ' << globalBestSolution.obj1 << endl;
+//        cout << localBestSolution.obj2 << ' ' << globalBestSolution.obj2 << endl;
 //        cout << "-----------------" << endl;
         if(flag == maxIterTime) break;
     }
-    cout << ins.instanceNo << ' ' << globalBestSolution.time << endl;
+    cout << ins.instanceNo << ' ' << globalBestSolution.obj4 << endl;
 //    for(int i: localBestSolution.sequence){
 //        cout << i << ' ';
 //    }cout << endl;
-//    cout << localBestSolution.obj0 << ' ' <<  localBestSolution.obj1 << ' ' << localBestSolution.time << endl;
-//    cout << "insNo:" << ins.instanceNo << "time: " << globalBestSolution.time << endl;
+//    cout << localBestSolution.obj1 << ' ' <<  localBestSolution.obj2 << ' ' << localBestSolution.obj4 << endl;
+//    cout << "insNo:" << ins.instanceNo << "obj4: " << globalBestSolution.obj4 << endl;
     solution s;
     s.sequence = globalBestSolution.sequence;
-    s.obj1 = globalBestSolution.obj0;
-    s.obj2 = globalBestSolution.obj1;
-    s.obj3 = globalBestSolution.obj2;
-    s.obj4 = globalBestSolution.time;
+    s.obj1 = globalBestSolution.obj1;
+    s.obj2 = globalBestSolution.obj2;
+    s.obj3 = globalBestSolution.obj3;
+    s.obj4 = globalBestSolution.obj4;
     solutions.emplace_back(s);
     return solutions;
 }
 
-sol Obj1Greedy::generateSolution(){
+sol Obj4Greedy::generateSolution(){
     sol initSolution;
     auto sortedByType = [](vector<carInfo> &cars) {
         std::sort(cars.begin(), cars.end(), [](const carInfo &a, const carInfo &b) {
@@ -244,18 +244,108 @@ sol Obj1Greedy::generateSolution(){
 
 }
 
-void Obj1Greedy::swap1(sol& solution) {
-    vector<int> parent = solution.sequence;
-    int index1 = ::rand() % parent.size();
-    int index2 = ::rand() % parent.size();
+void Obj4Greedy::evaluation(sol &c) {
+    c.obj2 = 0;
+    c.obj1 = 0;  // obj0和1目标值归零
+    c.obj3 = 0;
+    c.obj4 = 0;
+    vector<int> test = c.sequence;
+    sort(test.begin(), test.end());
+    vector<int> examine(ins.cars.size());
+    for(int i = 0; i != examine.size(); ++i){
+        examine[i] = i;
+    }
+    if(examine != test){
+        c.obj1 = c.obj2 = c.obj3  = c.obj4 = -1;
+        cout << "error" << endl;
+        return;
+    }
 
-    swap(parent[index1], parent[index2]);
-    sol child = sol{parent, 0, 0};
-    evaluation(child);         // 更新child参数
-    solution = child.obj0 != 0 ? solution : child;          // 如果为可行解 则保留 否则保留原解
+
+    int typeCommonTime = 1;
+    int colorCommonTime = 0;
+    int speedTransCommonTime = 0;   // 连续四驱次数
+    int obj2Cost = 0;   // obj2惩罚值，限制偏向颜色以 5 的倍数切换生产
+    for(int i = 0; i != c.sequence.size() - 1; ++i){
+        // obj3 记录超出4辆连续四驱的惩罚洗漱 以及 一辆四驱的惩罚系数
+        if(ins.cars[c.sequence[i]].speedTrans == "四驱"){
+            ++speedTransCommonTime;
+            if(speedTransCommonTime >= 4){  // 连续四驱数量到4 记录超越次数作为惩罚值obj3
+                c.obj3 += 2;
+            }
+        }
+        else{
+            if(speedTransCommonTime == 1)   c.obj3 += 1;
+            speedTransCommonTime = 0;
+        }
+
+        // obj2 焊装总切换次数 记录因为不同类型导致的切换次数
+        if(ins.cars[c.sequence[i]].type == ins.cars[c.sequence[i + 1]].type){   // 如果前后相等 记录连续相等车数
+            ++typeCommonTime;
+        }
+        else{
+            ++c.obj1;     // 如果前后不相等 记录切换次数
+            if(typeCommonTime * ins.weldingTime < ins.weldingContinueTime){     // 如果前后不相等且小于30min 总时长增加
+                c.obj4 += ins.weldingContinueTime - typeCommonTime * ins.weldingTime;
+            }
+            typeCommonTime = 1;
+        }
+
+        // obj3 记录未达到连续五辆同色车的惩罚系数
+        if (ins.cars[c.sequence[i]].checkRoofNotEqualBody()) { // 本车车顶颜色!=车身颜色
+            ++c.obj2;
+            if (colorCommonTime != 0) {
+                obj2Cost += (5 - colorCommonTime);
+            }
+            colorCommonTime = 0;
+        }
+        else{               // 本车车顶颜色=车身颜色
+            ++colorCommonTime;
+            if(colorCommonTime == 5){       // 如果五辆车颜色相同
+                ++c.obj2;
+                colorCommonTime = 0;
+                continue;
+            }
+
+        }
+        // 如果前车车身!=后车车顶
+        if (ins.cars[c.sequence[i]].checkBodyNotEqualNextRoof(ins.cars[c.sequence[i + 1]])) {
+            ++c.obj2;
+            if (colorCommonTime != 0) {
+                obj2Cost += (5 - colorCommonTime);
+            }
+            colorCommonTime = 0;
+        }
+
+    }
+    if(speedTransCommonTime == 3 and ins.cars[c.sequence.back()].speedTrans == "四驱"){
+        c.obj3 += 2;     // 如果前后不相等 记录总装车间切换次数
+    }
+    else if(speedTransCommonTime == 0 and ins.cars[c.sequence.back()].speedTrans == "四驱"){
+        c.obj3 += 1;
+    }
+    else if(speedTransCommonTime == 1 and ins.cars[c.sequence.back()].speedTrans == "两驱"){
+        c.obj3 += 1;
+    }
+
+    if (ins.cars[c.sequence.back()].checkRoofNotEqualBody()) {
+        if (colorCommonTime != 0) {
+            obj2Cost += (5 - colorCommonTime);
+        }
+        ++c.obj2;
+    }
+    else {
+        // 车身车顶颜色相同
+        ++colorCommonTime;
+        obj2Cost += (5 - colorCommonTime);
+    }
+
+    // obj4
+    c.obj4 += ins.weldingTime * c.sequence.size() + c.obj2 * ins.paintingWaitingTime + ins.paintingTime * 2 * c.sequence.size() + ins.assembleTime * c.sequence.size();
+    c.obj2 = obj2Cost;
 }
 
-void Obj1Greedy::particallySwapMutation(sol& population){
+void Obj4Greedy::particallySwapMutation(sol& population){
     auto findStartEnd = [&](const vector<int> &sequence, int &start, int &end) {
         while (start - 1 >= 0) {
             carInfo cur = ins.cars[sequence[start]];
@@ -363,168 +453,4 @@ void Obj1Greedy::particallySwapMutation(sol& population){
     // }
     // cout << endl;
     // assert(false);
-}
-
-void Obj1Greedy::mutation(sol& solution) {
-    vector<int> parent = solution.sequence;
-    // 生成位置序列（0-1）
-//    int oneNum = ::rand() % (parent.size() / 15  );    // 变异位置数量
-    int oneNum = 2;
-    vector<int> position(parent.size(), 0);
-    for(int i = 0; i != oneNum; ++i){
-        position[i] = 1;
-    }
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    shuffle(position.begin(), position.end(), default_random_engine(seed));   // 对四驱同类型乱序后分组
-
-    // 记录需要变异的元素
-    vector<int> genes = {};
-    for(int i = 0; i != position.size(); ++i){
-        if(position[i] == 1){
-            genes.emplace_back(parent[i]);
-        }
-    }
-    seed = std::chrono::system_clock::now().time_since_epoch().count();
-    shuffle(genes.begin(), genes.end(), default_random_engine(seed));   // 对四驱同类型乱序后分组
-
-    for(int i = 0, j = 0; j != genes.size(); ++i){      // 重新放回位置
-        if(position[i] == 1){
-            parent[i] = genes[j++];
-        }
-    }
-    sol child = sol{parent, 0, 0};
-    evaluation(child);         // 更新child参数
-    solution = child.obj0 != 0 ? solution : child;          // 如果为可行解 则保留 否则保留原解
-
-}
-
-void Obj1Greedy::pretreatSpeedTrans(vector<int> &type2, vector<int> &type4) {
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    shuffle(type4.begin(), type4.end(), default_random_engine(seed));   // 对四驱同类型乱序后分组
-
-    vector<vector<int>> type4Set = {};
-    int pre = 0;
-    int behind = 0;
-    while(behind != type4.size()){
-        int length = ::rand() % 3 + 1;
-        behind = pre + length > type4.size() ? type4.size() : pre + length;
-        vector<int> set(type4.begin()+pre, type4.begin()+behind);
-
-        type4Set.emplace_back(set);
-        pre = behind;
-    }
-
-    seed = std::chrono::system_clock::now().time_since_epoch().count();
-    shuffle(type2.begin(), type2.end(), default_random_engine(seed));         // 对同类型乱序后分组
-    vector<int> position(type2.size(), 0);
-    for(int i = 0; i != type2.size(); ++i) position[i] = i;
-
-    seed = std::chrono::system_clock::now().time_since_epoch().count();
-    shuffle(position.begin(), position.end(), default_random_engine(seed));   // 乱序后选前n个位置插入四驱
-    sort(position.begin(), position.begin() + type4Set.size(), [&](const int& a, const int& b) {
-        return a > b;});
-
-    for(int i = 0; i != type4Set.size(); ++i){
-        type2.insert(type2.begin() + position[i], type4Set[i].begin(), type4Set[i].end());
-    }
-}
-
-void Obj1Greedy::evaluation(sol &c) {
-    c.obj1 = 0;
-    c.obj0 = 0;  // obj0和1目标值归零
-    c.obj2 = 0;
-    c.time = 0;
-    vector<int> test = c.sequence;
-    sort(test.begin(), test.end());
-    vector<int> examine(ins.cars.size());
-    for(int i = 0; i != examine.size(); ++i){
-        examine[i] = i;
-    }
-    if(examine != test){
-        c.obj0 = c.obj1 = c.obj2  = c.time = -1;
-        cout << "error" << endl;
-        return;
-    }
-
-
-    int typeCommonTime = 1;
-    int colorCommonTime = 0;
-    int speedTransCommonTime = 0;   // 连续四驱次数
-    int obj2Cost = 0;   // obj2惩罚值，限制偏向颜色以 5 的倍数切换生产
-    for(int i = 0; i != c.sequence.size() - 1; ++i){
-        // obj3 记录超出4辆连续四驱的惩罚洗漱 以及 一辆四驱的惩罚系数
-        if(ins.cars[c.sequence[i]].speedTrans == "四驱"){
-            ++speedTransCommonTime;
-            if(speedTransCommonTime >= 4){  // 连续四驱数量到4 记录超越次数作为惩罚值obj3
-                ++c.obj2;
-            }
-        }
-        else{
-            if(speedTransCommonTime == 1)   c.obj2 += 0.5;
-            speedTransCommonTime = 0;
-        }
-
-        // obj1 焊装总切换次数 记录因为不同类型导致的切换次数
-        if(ins.cars[c.sequence[i]].type == ins.cars[c.sequence[i + 1]].type){   // 如果前后相等 记录连续相等车数
-            ++typeCommonTime;
-        }
-        else{
-            ++c.obj0;     // 如果前后不相等 记录切换次数
-            if(typeCommonTime * ins.weldingTime < ins.weldingContinueTime){     // 如果前后不相等且小于30min 总时长增加
-                c.time += ins.weldingContinueTime - typeCommonTime * ins.weldingTime;
-            }
-            typeCommonTime = 1;
-        }
-
-        // obj2 记录未达到连续五辆同色车的惩罚系数
-        if (ins.cars[c.sequence[i]].checkRoofNotEqualBody()) { // 本车车顶颜色!=车身颜色
-            ++c.obj1;
-            if (colorCommonTime != 0) {
-                obj2Cost += (5 - colorCommonTime);
-            }
-            colorCommonTime = 0;
-        }
-        else{               // 本车车顶颜色=车身颜色
-            ++colorCommonTime;
-            if(colorCommonTime == 5){       // 如果五辆车颜色相同
-                ++c.obj1;
-                colorCommonTime = 0;
-                continue;
-            }
-
-        }
-        // 如果前车车身!=后车车顶
-        if (ins.cars[c.sequence[i]].checkBodyNotEqualNextRoof(ins.cars[c.sequence[i + 1]])) {
-            ++c.obj1;
-            if (colorCommonTime != 0) {
-                obj2Cost += (5 - colorCommonTime);
-            }
-            colorCommonTime = 0;
-        }
-
-    }
-    if(speedTransCommonTime == 3 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
-        ++c.obj2;     // 如果前后不相等 记录总装车间切换次数
-    }
-    else if(speedTransCommonTime == 0 and ins.cars[*(c.sequence.end()-1)].speedTrans == "四驱"){
-        c.obj2 += 0.5;
-    }
-    else if(speedTransCommonTime == 1 and ins.cars[*(c.sequence.end()-1)].speedTrans == "两驱"){
-        c.obj2 += 0.5;
-    }
-    if (ins.cars[c.sequence.size() - 1].checkRoofNotEqualBody()) {
-        if (colorCommonTime != 0) {
-            obj2Cost += (5 - colorCommonTime);
-        }
-        ++c.obj1;
-    }
-    else {
-        // 车身车顶颜色相同
-        ++colorCommonTime;
-        obj2Cost += (5 - colorCommonTime);
-    }
-
-    // obj4
-    c.time += ins.weldingTime * c.sequence.size() + c.obj1 * ins.paintingWaitingTime + ins.paintingTime * 2 * c.sequence.size() + ins.assembleTime * c.sequence.size();
-    c.obj1 = obj2Cost;
 }

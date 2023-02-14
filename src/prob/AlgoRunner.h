@@ -17,7 +17,9 @@
 #include <ctime>
 #include "model/Greedy.h"
 #include "model/ImprovedNSGA2.h"
-#include "model/Obj1Greedy.h"
+#include "model/Obj2Greedy.h"
+#include "model/Obj3Greedy.h"
+#include "model/Obj4Greedy.h"
 #include <mutex>
 #include <set>
 using namespace std;

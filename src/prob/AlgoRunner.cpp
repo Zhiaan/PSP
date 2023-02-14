@@ -57,18 +57,25 @@ vector<solution> AlgoRunner::chooseAlgo(string algoName, instance ins) {
         ImprovedNSGA2 INSGA2(ins);
         result = INSGA2.NSGA2Runner();
     }
-    else if(algoName == "Obj1Greedy"){
-        Obj1Greedy og(ins);
-        result = og.Obj1GreedyRunner();
+    else if(algoName == "Obj2Greedy"){
+        Obj2Greedy og(ins);
+        result = og.Obj2GreedyRunner();
+    }
+    else if(algoName == "Obj3Greedy"){
+        Obj3Greedy og(ins);
+        result = og.Obj3GreedyRunner();
+    }
+    else if(algoName == "Obj4Greedy"){
+        Obj4Greedy og(ins);
+        result = og.Obj4GreedyRunner();
     }
 //    endTime = clock();
 //    double spendTime = (double)(endTime - startTime) / CLOCKS_PER_SEC;
-//    s.time = spendTime;
+//    s.obj4 = spendTime;
     return result;
 }
 
 void AlgoRunner::processFile(Data &d, Param &p, IO &io, const string &filePathName, const int &threadId) {
-//  string filePath = p.dataPath + "/data_103.csv";
     instance ins = d.getInstance(filePathName);
     ins.threadId = threadId;
 
@@ -82,8 +89,8 @@ void AlgoRunner::processFile(Data &d, Param &p, IO &io, const string &filePathNa
     //    double avg1 = 0, avg2 = 0, avg3 = 0;
 //    double sum1 = 0, sum2 = 0, sum3 = 0;
 //    for(auto& s: solutions){
-//        sum1 += s.obj1;
-//        sum2 += s.obj2;
+//        sum1 += s.obj2;
+//        sum2 += s.obj3;
 //        sum3 += s.obj3;
 //    }
 //    avg1 = sum1 / solutions.size();

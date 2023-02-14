@@ -5,7 +5,7 @@ import openpyxl
 import csv
 from glob import glob
 
-data_path1 = './result/Obj1Greedy'
+data_path1 = './result/Obj4Greedy'
 data_path2 = './result/INSGA2-54'
 save_path = './result/Obj1Greedy_and_INSGA2-54'
 

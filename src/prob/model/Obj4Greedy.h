@@ -2,8 +2,8 @@
 // Created by Zhiaan on 2023/1/23.
 //
 
-#ifndef PSP_OBJ1GREEDY_H
-#define PSP_OBJ1GREEDY_H
+#ifndef PSP_OBJ4GREEDY_H
+#define PSP_OBJ4GREEDY_H
 #include <vector>
 #include <iostream>
 #include "../Solution.h"
@@ -16,16 +16,16 @@ using namespace std;
 
 struct sol{
     vector<int> sequence;
-    long long obj0;        // obj0
     long long obj1;        // obj1
-    long long obj2;
-    long long time;        // 总时长
+    long long obj2;        // obj2
+    long long obj3;
+    long long obj4;        // 总时长
 };
 
-class Obj1Greedy {
+class Obj4Greedy {
 public:
-    Obj1Greedy(instance inst);
-    vector<solution> Obj1GreedyRunner();
+    Obj4Greedy(instance inst);
+    vector<solution> Obj4GreedyRunner();
 
 private:
     instance ins;
@@ -41,4 +41,4 @@ private:
 };
 
 
-#endif //PSP_OBJ1GREEDY_H
+#endif //PSP_OBJ4GREEDY_H
