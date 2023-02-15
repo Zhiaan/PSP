@@ -9,6 +9,7 @@ ImprovedNSGA2::ImprovedNSGA2(instance inst) : ins(inst), og2(inst), og3(inst), o
     maxIter = 1000;
     iter = 0;
     crossTime = ins.cars.size() / 1000 + 1;
+    rank0_best_obj = vector<long long>(4, std::numeric_limits<long long>::max());
 }
 
 vector<solution> ImprovedNSGA2::NSGA2Runner() {
@@ -21,6 +22,7 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
     greedySortInitializePopulation(population);
 //     greedyObj1InitializePopulation(population);     // obj2贪婪算法初始化种群
 //     randomInitializePopulation(population);           // 随机初始化种群
+    nondominatedSorting(population);
 
     for(; iter < maxIter; ++iter){
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
@@ -1056,7 +1058,7 @@ void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
         parent = child;
         evaluation(population[i]);
 
-        if(true){
+        if (checkObjBetter(population[i])) {
             chromosome new2 = {og2.obj2GreedyRunner(population[i].sequence)[0].sequence};
             evaluation(new2);
             population.emplace_back(new2);
@@ -1103,6 +1105,11 @@ void ImprovedNSGA2::nondominatedSorting(vector<chromosome> &population) {
 
         if(dominatingNum[popIndex] == 0){
             population[popIndex].rank = 0;
+            for (int i = 0; i < rank0_best_obj.size(); i++) {
+                if (population[popIndex].objs[i] < rank0_best_obj[i]) {
+                    rank0_best_obj[i] = population[popIndex].objs[i];
+                }
+            }
             front.emplace_back(population[popIndex]);
         }
     }
@@ -1201,4 +1208,13 @@ bool ImprovedNSGA2::cmp(int a, int b){
 
 bool ImprovedNSGA2::cmp1(pair<int, int> a, pair<int, int> b){
     return a.second < b.second;
+}
+
+bool ImprovedNSGA2::checkObjBetter(chromosome &c){
+    for (int i = 0; i < c.objs.size(); i++) {
+        if (c.objs[i] < rank0_best_obj[i]) {
+            return true;
+        }
+    }
+    return false;
 }

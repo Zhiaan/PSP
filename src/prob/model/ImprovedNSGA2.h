@@ -79,6 +79,8 @@ private:
 
     // helper func
     void findStartEnd(const vector<int> &sequence, int &start, int &end) const;
+    bool checkObjBetter(chromosome &c);
+    vector<long long> rank0_best_obj; // current iter rank0 best
 };
 
 
