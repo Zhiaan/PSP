@@ -5,7 +5,7 @@
 #include "Obj3Greedy.h"
 Obj3Greedy::Obj3Greedy(instance inst) {
     ins = inst;
-    neighborSize = 500;
+    neighborSize = 300;
     maxIterTime = 200;
 }
 
@@ -64,7 +64,7 @@ vector<solution> Obj3Greedy::obj3GreedyRunner(vector<int> sequence) {
 //        cout << "-----------------" << endl;
         if(flag == maxIterTime) break;
     }
-    cout << ins.instanceNo << ' ' << globalBestSolution.obj1 << ' ' << globalBestSolution.obj2 << ' ' << globalBestSolution.obj3 << ' ' << globalBestSolution.obj4 << endl;
+//    cout << ins.instanceNo << ' ' << globalBestSolution.obj1 << ' ' << globalBestSolution.obj2 << ' ' << globalBestSolution.obj3 << ' ' << globalBestSolution.obj4 << endl;
 
 
 //    for(int i: localBestSolution.sequence){

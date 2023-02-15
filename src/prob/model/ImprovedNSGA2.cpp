@@ -38,10 +38,8 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
         particallySwapMutation(newPopulation);                        // 变异算子
 
         newPopulation.insert(newPopulation.end(), population.begin(), population.end());    // 老种群与新种群合并
-        cout << newPopulation.size() << endl;
 
         nondominatedSorting(newPopulation);     // 非支配排序
-        cout << newPopulation.size() << endl;
         population.clear();
         population.insert(population.begin(), newPopulation.begin(), newPopulation.begin() + populationSize);
 //        for(auto j: population){
@@ -1060,11 +1058,16 @@ void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
 
         if(true){
             chromosome new2 = {og2.obj2GreedyRunner(population[i].sequence)[0].sequence};
-//            chromosome new3 = {og3.obj3GreedyRunner(population[i].sequence)[0].sequence};
-//            chromosome new4 = {og4.obj4GreedyRunner(population[i].sequence)[0].sequence};
+            evaluation(new2);
             population.emplace_back(new2);
-//            population.emplace_back(new3);
-//            population.emplace_back(new4);
+
+            chromosome new3 = {og3.obj3GreedyRunner(population[i].sequence)[0].sequence};
+            evaluation(new3);
+            population.emplace_back(new3);
+
+            chromosome new4 = {og4.obj4GreedyRunner(population[i].sequence)[0].sequence};
+            evaluation(new4);
+            population.emplace_back(new4);
         }
 
         // for (auto & p: parent) {

@@ -6,7 +6,7 @@
 
 Obj2Greedy::Obj2Greedy(instance inst) {
     ins = inst;
-    neighborSize = 500;
+    neighborSize = 300;
     maxIterTime = 200;
 }
 

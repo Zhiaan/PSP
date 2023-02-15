@@ -8,7 +8,7 @@
 Obj4Greedy::Obj4Greedy(instance inst ) {
     ins = inst;
     sequenceLength = ins.cars.size();
-    neighborSize = 500;
+    neighborSize = 300;
     maxIterTime = 200;
 
 }
@@ -30,7 +30,7 @@ vector<solution> Obj4Greedy::obj4GreedyRunner(vector<int> sequence) {
     }
     int flag = 0;
     while(true){
-        printf("current threadId: %d, current instance: %s, flag: %d\n", ins.threadId, ins.instanceNo.c_str(), flag);
+//        printf("current threadId: %d, current instance: %s, flag: %d\n", ins.threadId, ins.instanceNo.c_str(), flag);
         sol bestNeighbor;
         bestNeighbor.obj4 = INT_MAX;
         for(int j = 0; j != neighborSize; ++j){
@@ -56,7 +56,7 @@ vector<solution> Obj4Greedy::obj4GreedyRunner(vector<int> sequence) {
 //        cout << "-----------------" << endl;
         if(flag == maxIterTime) break;
     }
-    cout << ins.instanceNo << ' ' << globalBestSolution.obj4 << endl;
+//    cout << ins.instanceNo << ' ' << globalBestSolution.obj4 << endl;
 //    for(int i: localBestSolution.sequence){
 //        cout << i << ' ';
 //    }cout << endl;
