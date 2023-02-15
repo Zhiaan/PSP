@@ -4,19 +4,18 @@
 
 #include "Obj2Greedy.h"
 
-Obj2Greedy::Obj2Greedy(instance inst, vector<int> sequence) {
+Obj2Greedy::Obj2Greedy(instance inst) {
     ins = inst;
     neighborSize = 500;
     maxIterTime = 200;
-    existSolution = {sequence, 0, 0, 0, 0};
 }
 
-vector<solution> Obj2Greedy::Obj2GreedyRunner() {
+vector<solution> Obj2Greedy::obj2GreedyRunner(vector<int> sequence) {
+    existSolution = {sequence, 0, 0, 0, 0};
     vector<solution> solutions;
-
     sol globalBestSolution;
     sol localBestSolution;
-    if(existSolution.sequence.size() == 0){
+    if(existSolution.sequence.empty()){
         localBestSolution = generateSolution();
         globalBestSolution = localBestSolution;
     }
@@ -26,9 +25,16 @@ vector<solution> Obj2Greedy::Obj2GreedyRunner() {
         globalBestSolution = existSolution;
     }
 
+    sort(localBestSolution.sequence.begin(),localBestSolution.sequence.end());
+//    for(auto i: localBestSolution.sequence){
+//        cout << i << ' ';
+//    }cout << endl;
+//    cout << localBestSolution.obj1 << ' ' << localBestSolution.obj2 << ' ' << localBestSolution.obj3 << ' ' << localBestSolution.obj4 << endl;
+//    cout << localBestSolution.sequence.size() << endl;
+
     int flag = 0;
     while(true){
-        printf("current threadId: %d, current instance: %s, flag: %d\n", ins.threadId, ins.instanceNo.c_str(), flag);
+//        printf("flag: %d\n", flag);
         sol bestNeighbor;
         bestNeighbor.obj2 = INT_MAX;
         for(int j = 0; j != neighborSize; ++j){
@@ -36,8 +42,11 @@ vector<solution> Obj2Greedy::Obj2GreedyRunner() {
 
             particallySwapMutation(neighbor);
             if((neighbor.obj2 < bestNeighbor.obj2) \
- or (neighbor.obj2 == bestNeighbor.obj2 and neighbor.obj1 <= bestNeighbor.obj1 and
-     ((neighbor.obj3 <= bestNeighbor.obj3 and neighbor.obj4 < bestNeighbor.obj4) or (neighbor.obj3 < bestNeighbor.obj3 and neighbor.obj4 <= bestNeighbor.obj4)))) bestNeighbor = neighbor;
+                or (neighbor.obj2 == bestNeighbor.obj2 and neighbor.obj1 <= bestNeighbor.obj1 and
+                ((neighbor.obj3 <= bestNeighbor.obj3 and neighbor.obj4 < bestNeighbor.obj4)
+                or (neighbor.obj3 < bestNeighbor.obj3 and neighbor.obj4 <= bestNeighbor.obj4)))) {
+                bestNeighbor = neighbor;
+            }
 
 //            cout << neighbor.obj4 << ' ' << bestNeighbor.obj4 << endl;
         }
@@ -55,7 +64,7 @@ vector<solution> Obj2Greedy::Obj2GreedyRunner() {
 //        cout << "-----------------" << endl;
         if(flag == maxIterTime) break;
     }
-    cout << ins.instanceNo << ' ' << globalBestSolution.obj1 << ' ' << globalBestSolution.obj2 << ' ' << globalBestSolution.obj3 << ' ' << globalBestSolution.obj4 << endl;
+//    cout << ins.instanceNo << ' ' << globalBestSolution.obj1 << ' ' << globalBestSolution.obj2 << ' ' << globalBestSolution.obj3 << ' ' << globalBestSolution.obj4 << endl;
 
 
 //    for(int i: localBestSolution.sequence){

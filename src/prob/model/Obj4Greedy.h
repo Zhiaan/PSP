@@ -25,8 +25,8 @@ struct sol{
 
 class Obj4Greedy {
 public:
-    Obj4Greedy(instance inst, vector<int> sequence);
-    vector<solution> Obj4GreedyRunner();
+    Obj4Greedy(instance inst);
+    vector<solution> obj4GreedyRunner(vector<int> sequence);
 
 private:
     instance ins;

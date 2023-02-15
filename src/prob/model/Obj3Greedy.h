@@ -8,8 +8,8 @@
 #include <random>
 class Obj3Greedy {
 public:
-    Obj3Greedy(instance inst, vector<int> sequence);
-    vector<solution> Obj3GreedyRunner();
+    Obj3Greedy(instance inst);
+    vector<solution> obj3GreedyRunner(vector<int> sequence);
 
 private:
     instance ins;

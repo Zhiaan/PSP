@@ -3,16 +3,16 @@
 //
 
 #include "ImprovedNSGA2.h"
-ImprovedNSGA2::ImprovedNSGA2(instance inst) {
-    ins = inst;
-    populationSize = 1000;
+ImprovedNSGA2::ImprovedNSGA2(instance inst) : ins(inst), og2(inst), og3(inst), og4(inst) {
+    populationSize = 10;
     chromosomeLength = ins.cars.size();
-    maxIter = 2000;
+    maxIter = 1000;
     iter = 0;
     crossTime = ins.cars.size() / 1000 + 1;
 }
 
 vector<solution> ImprovedNSGA2::NSGA2Runner() {
+
     vector<solution> solutions;
 
     vector<chromosome> population(populationSize);
@@ -24,27 +24,24 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 
     for(; iter < maxIter; ++iter){
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
-//        int num = 0;
-//        for(auto i: population){
-//            if(i.rank != 0) break;
-//            ++num;
-//            for(auto j: i.objs){
-//                cout << j << ' ';
-//            }cout << i.rank << ' ' << i.crowding_distance << endl;
-//        }
-//        cout << num << endl;
+
         vector<chromosome> newPopulation = population;      // 生成新种群
+
+        int num = 0;
 
 //        cross(newPopulation);                           // 交叉算子
         colorCommonCross(newPopulation);           // 颜色相同交叉
 //        particallyMappedCross(newPopulation);       // PMX
 
+
         // mutation(newPopulation);                        // 变异算子
         particallySwapMutation(newPopulation);                        // 变异算子
 
         newPopulation.insert(newPopulation.end(), population.begin(), population.end());    // 老种群与新种群合并
+        cout << newPopulation.size() << endl;
 
         nondominatedSorting(newPopulation);     // 非支配排序
+        cout << newPopulation.size() << endl;
         population.clear();
         population.insert(population.begin(), newPopulation.begin(), newPopulation.begin() + populationSize);
 //        for(auto j: population){
@@ -993,7 +990,8 @@ void ImprovedNSGA2::findStartEnd(const vector<int> &sequence, int &start, int &e
 }
 
 void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
-    for(int i = 0; i < population.size(); ++i){
+    int length = population.size();
+    for(int i = 0; i < length; ++i){
         vector<int> &parent = population[i].sequence;
 
         // parent = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3};
@@ -1059,6 +1057,15 @@ void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
 
         parent = child;
         evaluation(population[i]);
+
+        if(true){
+            chromosome new2 = {og2.obj2GreedyRunner(population[i].sequence)[0].sequence};
+//            chromosome new3 = {og3.obj3GreedyRunner(population[i].sequence)[0].sequence};
+//            chromosome new4 = {og4.obj4GreedyRunner(population[i].sequence)[0].sequence};
+            population.emplace_back(new2);
+//            population.emplace_back(new3);
+//            population.emplace_back(new4);
+        }
 
         // for (auto & p: parent) {
         //     cout << "(" << ins.cars[p].bodyColor << ", " << ins.cars[p].roofColor << ", " << ins.cars[p].carNo << ") ";

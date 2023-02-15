@@ -9,8 +9,8 @@
 #include <random>
 class Obj2Greedy {
 public:
-    Obj2Greedy(instance inst, vector<int> sequence);
-    vector<solution> Obj2GreedyRunner();
+    Obj2Greedy(instance inst);
+    vector<solution> obj2GreedyRunner(vector<int> sequence);
 
 private:
     instance ins;

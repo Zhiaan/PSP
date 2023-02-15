@@ -15,6 +15,9 @@
 #include <cassert>
 #include <set>
 #include <unordered_set>
+#include "Obj2Greedy.h"
+#include "Obj3Greedy.h"
+#include "Obj4Greedy.h"
 struct chromosome{
     vector<int> sequence;
     vector<long long> objs;        // {obj1, obj2, obj3, obj4}
@@ -55,6 +58,9 @@ public:
     int crossTime;  // cross重复次数
     static bool cmp(int a, int b);
     static bool cmp1(pair<int, int> a, pair<int, int> b);
+    Obj2Greedy og2;
+    Obj3Greedy og3;
+    Obj4Greedy og4;
 private:
     instance ins;
     void evaluation(chromosome &s);

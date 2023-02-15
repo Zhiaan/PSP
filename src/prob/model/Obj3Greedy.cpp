@@ -3,19 +3,19 @@
 //
 
 #include "Obj3Greedy.h"
-Obj3Greedy::Obj3Greedy(instance inst, vector<int> sequence) {
+Obj3Greedy::Obj3Greedy(instance inst) {
     ins = inst;
     neighborSize = 500;
     maxIterTime = 200;
-    existSolution = {sequence, 0, 0, 0, 0};
 }
 
-vector<solution> Obj3Greedy::Obj3GreedyRunner() {
+vector<solution> Obj3Greedy::obj3GreedyRunner(vector<int> sequence) {
+    existSolution = {sequence, 0, 0, 0, 0};
     vector<solution> solutions;
 
     sol globalBestSolution;
     sol localBestSolution;
-    if(existSolution.sequence.size() == 0){
+    if(existSolution.sequence.empty()){
         localBestSolution = generateSolution();
         globalBestSolution = localBestSolution;
     }
@@ -24,29 +24,36 @@ vector<solution> Obj3Greedy::Obj3GreedyRunner() {
         localBestSolution = existSolution;
         globalBestSolution = existSolution;
     }
+//    cout << localBestSolution.sequence.size() << endl;
+//    cout << localBestSolution.obj1 << ' ' << localBestSolution.obj2 << ' ' << localBestSolution.obj3 << ' ' << localBestSolution.obj4 << endl;
 
     int flag = 0;
     while(true){
-        printf("current threadId: %d, current instance: %s, flag: %d\n", ins.threadId, ins.instanceNo.c_str(), flag);
+//        printf("current threadId: %d, current instance: %s, flag: %d\n", ins.threadId, ins.instanceNo.c_str(), flag);
         sol bestNeighbor;
         bestNeighbor.obj3 = INT_MAX;
         for(int j = 0; j != neighborSize; ++j){
+//            cout << "j:" << j << ' ' << bestNeighbor.sequence.size() << endl;
             sol neighbor = localBestSolution;
-
             mutation(neighbor);
 
 //            swap1(neighbor);
 //            particallySwapMutation(neighbor);
             if((neighbor.obj3 < bestNeighbor.obj3) \
- or (neighbor.obj3 == bestNeighbor.obj3 and neighbor.obj1 <= bestNeighbor.obj1 and
-     ((neighbor.obj2 <= bestNeighbor.obj2 and neighbor.obj4 < bestNeighbor.obj4) or (neighbor.obj2 < bestNeighbor.obj2 and neighbor.obj4 <= bestNeighbor.obj4)))) bestNeighbor = neighbor;
+                or (neighbor.obj3 == bestNeighbor.obj3 and neighbor.obj1 <= bestNeighbor.obj1 and
+                ((neighbor.obj2 <= bestNeighbor.obj2 and neighbor.obj4 < bestNeighbor.obj4) or
+                (neighbor.obj2 < bestNeighbor.obj2 and neighbor.obj4 <= bestNeighbor.obj4)))){
+                bestNeighbor = neighbor;
+            }
 
 //            cout << neighbor.obj4 << ' ' << bestNeighbor.obj4 << endl;
         }
+//        cout << bestNeighbor.sequence.size() << endl;
         localBestSolution = bestNeighbor;
         if((bestNeighbor.obj3 < globalBestSolution.obj3) \
- or (bestNeighbor.obj3 == globalBestSolution.obj3 and bestNeighbor.obj1 <= globalBestSolution.obj1 and
-     ((bestNeighbor.obj2 <= globalBestSolution.obj2 and bestNeighbor.obj4 < globalBestSolution.obj4) or (bestNeighbor.obj2 < globalBestSolution.obj2 and bestNeighbor.obj4 <= globalBestSolution.obj4)))) {
+            or (bestNeighbor.obj3 == globalBestSolution.obj3 and bestNeighbor.obj1 <= globalBestSolution.obj1 and
+            ((bestNeighbor.obj2 <= globalBestSolution.obj2 and bestNeighbor.obj4 < globalBestSolution.obj4)
+            or (bestNeighbor.obj2 < globalBestSolution.obj2 and bestNeighbor.obj4 <= globalBestSolution.obj4)))) {
             globalBestSolution = bestNeighbor;
             flag = 0;
         }
@@ -326,24 +333,24 @@ void Obj3Greedy::mutation(sol& solution){
     if(ins.cars[solution.sequence[randPosition1]].speedTrans == "四驱" and ins.cars[solution.sequence[randPosition2]].speedTrans == "四驱" or
     ins.cars[solution.sequence[randPosition1]].speedTrans == "两驱" and ins.cars[solution.sequence[randPosition2]].speedTrans == "两驱"){
         swap(solution.sequence[randPosition1], solution.sequence[randPosition2]);
-
     }
     else{
         if(ins.cars[solution.sequence[randPosition1]].speedTrans == "两驱"){
             swap(randPosition1, randPosition2);             // position1：四驱 position2：两驱
         }
-        while(randPosition2 == 0 and ins.cars[solution.sequence[randPosition2 + 1]].speedTrans == "四驱" or
-        randPosition2 == solution.sequence.size() - 1 and ins.cars[solution.sequence[randPosition2 - 1]].speedTrans == "四驱" or
-        ins.cars[solution.sequence[randPosition2 + 1]].speedTrans == "四驱" or ins.cars[solution.sequence[randPosition2 - 1]].speedTrans == "四驱"){
+        while(ins.cars[solution.sequence[randPosition2]].speedTrans != "两驱" or (randPosition2 == 0 and ins.cars[solution.sequence[1]].speedTrans == "四驱") or
+        (randPosition2 == solution.sequence.size() - 1 and ins.cars[solution.sequence[randPosition2 - 1]].speedTrans == "四驱") or
+        (randPosition2 != 0 and randPosition2 != solution.sequence.size() - 1 and ins.cars[solution.sequence[randPosition2 + 1]].speedTrans == "四驱")
+        or (randPosition2 != 0 and randPosition2 != solution.sequence.size() - 1 and ins.cars[solution.sequence[randPosition2 - 1]].speedTrans == "四驱")){
             randPosition2 = ::rand() % solution.sequence.size();
         }
 
         int pre = randPosition1, behind = randPosition1;        // 四驱片段[pre, behind)
-        while(ins.cars[solution.sequence[pre]].speedTrans == "四驱" and pre >= 0){
+        while(pre >= 0 and ins.cars[solution.sequence[pre]].speedTrans == "四驱") {
             --pre;
         }
         ++pre;
-        while(ins.cars[solution.sequence[behind]].speedTrans == "四驱" and behind < solution.sequence.size()){
+        while(behind < solution.sequence.size() and ins.cars[solution.sequence[behind]].speedTrans == "四驱"){
             ++behind;
         }
 
@@ -355,7 +362,7 @@ void Obj3Greedy::mutation(sol& solution){
             newSequence.insert(newSequence.end(), solution.sequence.begin() + randPosition2, solution.sequence.begin() + randPosition2 + 1);
             newSequence.insert(newSequence.end(), solution.sequence.begin() + behind, solution.sequence.end());
         }
-        if(randPosition2 > behind){
+        else if(randPosition2 > behind){
             newSequence.insert(newSequence.end(), solution.sequence.begin(), solution.sequence.begin() + pre);
             newSequence.insert(newSequence.end(), solution.sequence.begin() + randPosition2, solution.sequence.begin() + randPosition2 + 1);
             newSequence.insert(newSequence.end(), solution.sequence.begin() + behind, solution.sequence.begin() + randPosition2);
@@ -364,10 +371,6 @@ void Obj3Greedy::mutation(sol& solution){
         }
         solution.sequence = newSequence;
     }
-
-//    for(auto i: solution.sequence){
-//        cout << i << ' ';
-//    }cout << endl;
 
     evaluation(solution);
 }

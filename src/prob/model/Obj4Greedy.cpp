@@ -5,15 +5,16 @@
 #include <random>
 #include "Obj4Greedy.h"
 
-Obj4Greedy::Obj4Greedy(instance inst, vector<int> sequence) {
+Obj4Greedy::Obj4Greedy(instance inst ) {
     ins = inst;
     sequenceLength = ins.cars.size();
     neighborSize = 500;
     maxIterTime = 200;
-    existSolution = {sequence, 0, 0, 0, 0};
+
 }
 
-vector<solution> Obj4Greedy::Obj4GreedyRunner() {
+vector<solution> Obj4Greedy::obj4GreedyRunner(vector<int> sequence) {
+    existSolution = {sequence, 0, 0, 0, 0};
     vector<solution> solutions;
 
     sol globalBestSolution;
