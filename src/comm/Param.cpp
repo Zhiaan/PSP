@@ -15,5 +15,4 @@ Param::Param(vector<string>& arguments) {
     outputPath = "../result/" + algoName + "/" ;         // 结果输出路径
     instancePrefix = "data_";  // 实例前缀
     instanceSuffix = ".csv";  // 实例后缀
-    timeLimit = arguments[2] == "" ? INT_MAX : stoi(arguments[1]);  // 求解时间限制
 }

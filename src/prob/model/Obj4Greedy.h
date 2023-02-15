@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cassert>
+#include <climits>
 using namespace std;
 
 struct sol{
@@ -24,7 +25,7 @@ struct sol{
 
 class Obj4Greedy {
 public:
-    Obj4Greedy(instance inst);
+    Obj4Greedy(instance inst, vector<int> sequence);
     vector<solution> Obj4GreedyRunner();
 
 private:
@@ -33,9 +34,7 @@ private:
     int neighborSize;
     int maxIterTime;
     sol generateSolution();
-    void pretreatSpeedTrans(vector<int> &type2, vector<int> &type4);
-    void mutation(sol& solution);
-    void swap1(sol& solution);
+    sol existSolution;
     void evaluation(sol &c);
     void particallySwapMutation(sol& population);
 };

@@ -8,7 +8,7 @@
 #include <random>
 class Obj3Greedy {
 public:
-    Obj3Greedy(instance inst);
+    Obj3Greedy(instance inst, vector<int> sequence);
     vector<solution> Obj3GreedyRunner();
 
 private:
@@ -17,6 +17,7 @@ private:
     int neighborSize;
     int maxIterTime;
     sol generateSolution();
+    sol existSolution;
     void evaluation(sol &c);
     vector<vector<carInfo>> splitVector(vector<carInfo>);
     void mutation(sol&);

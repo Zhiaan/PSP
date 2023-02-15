@@ -3,11 +3,11 @@
 //
 
 #include "Obj3Greedy.h"
-Obj3Greedy::Obj3Greedy(instance inst) {
+Obj3Greedy::Obj3Greedy(instance inst, vector<int> sequence) {
     ins = inst;
-    sequenceLength = ins.cars.size();
     neighborSize = 500;
     maxIterTime = 200;
+    existSolution = {sequence, 0, 0, 0, 0};
 }
 
 vector<solution> Obj3Greedy::Obj3GreedyRunner() {
@@ -15,14 +15,21 @@ vector<solution> Obj3Greedy::Obj3GreedyRunner() {
 
     sol globalBestSolution;
     sol localBestSolution;
-    localBestSolution = generateSolution();
-    globalBestSolution = localBestSolution;
+    if(existSolution.sequence.size() == 0){
+        localBestSolution = generateSolution();
+        globalBestSolution = localBestSolution;
+    }
+    else{
+        evaluation(existSolution);
+        localBestSolution = existSolution;
+        globalBestSolution = existSolution;
+    }
 
     int flag = 0;
     while(true){
         printf("current threadId: %d, current instance: %s, flag: %d\n", ins.threadId, ins.instanceNo.c_str(), flag);
         sol bestNeighbor;
-        bestNeighbor.obj3 = std::numeric_limits<double>::infinity();
+        bestNeighbor.obj3 = INT_MAX;
         for(int j = 0; j != neighborSize; ++j){
             sol neighbor = localBestSolution;
 
@@ -75,7 +82,6 @@ sol Obj3Greedy::generateSolution(){
             return a.type < b.type;
         });
     };
-
 
     vector<carInfo> cars_type = ins.cars;
     sortedByType(cars_type);
@@ -280,7 +286,10 @@ void Obj3Greedy::evaluation(sol &c) {
             }
             colorCommonTime = 0;
         }
+    }
 
+    if(typeCommonTime * ins.weldingTime < ins.weldingContinueTime){     // 如果前后不相等且小于30min 总时长增加
+        c.obj4 += ins.weldingContinueTime - typeCommonTime * ins.weldingTime;
     }
     if(speedTransCommonTime == 3 and ins.cars[c.sequence.back()].speedTrans == "四驱"){
         c.obj3 += 2;     // 如果前后不相等 记录总装车间切换次数

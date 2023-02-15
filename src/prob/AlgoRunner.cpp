@@ -24,7 +24,7 @@ void AlgoRunner::run(vector<string>& arguments){
             mtx.lock();
             while (fileId < numFiles) {
                 string filePath = filePathList[fileId];
-//                string filePath = p.dataPath + "/data_130.csv";
+//                string filePath = p.dataPath + "/data_1399.csv";
                 ++fileId;
                 mtx.unlock();
 
@@ -58,15 +58,15 @@ vector<solution> AlgoRunner::chooseAlgo(string algoName, instance ins) {
         result = INSGA2.NSGA2Runner();
     }
     else if(algoName == "Obj2Greedy"){
-        Obj2Greedy og(ins);
+        Obj2Greedy og(ins, vector<int>{});
         result = og.Obj2GreedyRunner();
     }
     else if(algoName == "Obj3Greedy"){
-        Obj3Greedy og(ins);
+        Obj3Greedy og(ins, vector<int>{});
         result = og.Obj3GreedyRunner();
     }
     else if(algoName == "Obj4Greedy"){
-        Obj4Greedy og(ins);
+        Obj4Greedy og(ins, vector<int>{});
         result = og.Obj4GreedyRunner();
     }
 //    endTime = clock();

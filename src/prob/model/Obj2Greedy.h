@@ -9,7 +9,7 @@
 #include <random>
 class Obj2Greedy {
 public:
-    Obj2Greedy(instance inst);
+    Obj2Greedy(instance inst, vector<int> sequence);
     vector<solution> Obj2GreedyRunner();
 
 private:
@@ -17,6 +17,7 @@ private:
     int sequenceLength;
     int neighborSize;
     int maxIterTime;
+    sol existSolution;
     sol generateSolution();
     void evaluation(sol &c);
     void particallySwapMutation(sol&);

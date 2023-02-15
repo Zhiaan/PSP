@@ -23,11 +23,6 @@ vector<solution> ImprovedNSGA2::NSGA2Runner() {
 //     randomInitializePopulation(population);           // 随机初始化种群
 
     for(; iter < maxIter; ++iter){
-        if(iter == maxIter / 2){
-            for(auto& chro: population){
-                evaluation(chro);
-            }
-        }
         printf("current threadId: %d, current instance: %s, current iter: %d\n", ins.threadId, ins.instanceNo.c_str(), iter);
 //        int num = 0;
 //        for(auto i: population){
@@ -348,6 +343,24 @@ void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& populatio
     for (auto& chro: population) {
         if(flag++ == 0){
             string filePath1 = "../result/Obj4Greedy/" + ins.instanceNo + ".csv";
+            IO io;
+            vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
+            for(int j = 0; j != chromosomeLength; ++j){
+                chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
+            }
+            evaluation(chro);
+        }
+        else if(flag++ == 1){
+            string filePath1 = "../result/Obj3Greedy/" + ins.instanceNo + ".csv";
+            IO io;
+            vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
+            for(int j = 0; j != chromosomeLength; ++j){
+                chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
+            }
+            evaluation(chro);
+        }
+        else if(flag++ == 2){
+            string filePath1 = "../result/Obj2Greedy/" + ins.instanceNo + ".csv";
             IO io;
             vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
             for(int j = 0; j != chromosomeLength; ++j){
