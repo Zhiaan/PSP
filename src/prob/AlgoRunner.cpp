@@ -58,16 +58,16 @@ vector<solution> AlgoRunner::chooseAlgo(string algoName, instance ins) {
         result = INSGA2.NSGA2Runner();
     }
     else if(algoName == "Obj2Greedy"){
-        Obj2Greedy og(ins, vector<int>{});
-        result = og.Obj2GreedyRunner();
+        Obj2Greedy og(ins);
+        result = og.obj2GreedyRunner(vector<int>{});
     }
     else if(algoName == "Obj3Greedy"){
-        Obj3Greedy og(ins, vector<int>{});
-        result = og.Obj3GreedyRunner();
+        Obj3Greedy og(ins);
+        result = og.obj3GreedyRunner(vector<int>{});
     }
     else if(algoName == "Obj4Greedy"){
-        Obj4Greedy og(ins, vector<int>{});
-        result = og.Obj4GreedyRunner();
+        Obj4Greedy og(ins);
+        result = og.obj4GreedyRunner(vector<int>{});
     }
 //    endTime = clock();
 //    double spendTime = (double)(endTime - startTime) / CLOCKS_PER_SEC;
