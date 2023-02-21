@@ -4,14 +4,23 @@
 
 [如何使用 Git 提交更新内容](./how-to-commit.md)
 
+## Requirement
+
+- CMake
+- C++ 编译器支持 C++17
+
 ## Run
 
 ```
+git clone https://github.com/Zhiaan/PSP.git
 cd PSP
 mkdir build && cd build
 cmake ..
+make
 ./PSP
 ```
+
+结果将输出到 `result/INSGA2` 文件夹，运行`python3 process_csv.py`如下，转换为提交的 xlsx 格式文件
 
 ## SSH
 

@@ -4,7 +4,8 @@
 
 #include "ImprovedNSGA2.h"
 ImprovedNSGA2::ImprovedNSGA2(instance inst) : ins(inst), og2(inst), og3(inst), og4(inst) {
-    populationSize = 10;
+    // populationSize = 10;
+    populationSize = 500;
     chromosomeLength = ins.cars.size();
     maxIter = 1000;
     iter = 0;
@@ -338,34 +339,34 @@ void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& populatio
 
     int flag = 0;
     for (auto& chro: population) {
-        if(flag++ == 0){
-            string filePath1 = "../result/Obj4Greedy/" + ins.instanceNo + ".csv";
-            IO io;
-            vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
-            for(int j = 0; j != chromosomeLength; ++j){
-                chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
-            }
-            evaluation(chro);
-        }
-        else if(flag++ == 1){
-            string filePath1 = "../result/Obj3Greedy/" + ins.instanceNo + ".csv";
-            IO io;
-            vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
-            for(int j = 0; j != chromosomeLength; ++j){
-                chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
-            }
-            evaluation(chro);
-        }
-        else if(flag++ == 2){
-            string filePath1 = "../result/Obj2Greedy/" + ins.instanceNo + ".csv";
-            IO io;
-            vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
-            for(int j = 0; j != chromosomeLength; ++j){
-                chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
-            }
-            evaluation(chro);
-        }
-        else{
+        // if(flag++ == 0){
+        //     string filePath1 = "../result/Obj4Greedy/" + ins.instanceNo + ".csv";
+        //     IO io;
+        //     vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
+        //     for(int j = 0; j != chromosomeLength; ++j){
+        //         chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
+        //     }
+        //     evaluation(chro);
+        // }
+        // else if(flag++ == 1){
+        //     string filePath1 = "../result/Obj3Greedy/" + ins.instanceNo + ".csv";
+        //     IO io;
+        //     vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
+        //     for(int j = 0; j != chromosomeLength; ++j){
+        //         chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
+        //     }
+        //     evaluation(chro);
+        // }
+        // else if(flag++ == 2){
+        //     string filePath1 = "../result/Obj2Greedy/" + ins.instanceNo + ".csv";
+        //     IO io;
+        //     vector<vector<string>> obj1GreedySolution = io.readCSV(filePath1);
+        //     for(int j = 0; j != chromosomeLength; ++j){
+        //         chro.sequence.emplace_back(stoi(obj1GreedySolution[0][j]));
+        //     }
+        //     evaluation(chro);
+        // }
+        // else{
             vector<carInfo> A_not_same_copy = cars_A_not_same_color; // not split more, final use!!!
             vector<carInfo> B_not_same_copy = cars_B_not_same_color; // not split more, final use!!!
             vector<vector<carInfo>> A_same_copy = split_cars_A_same_color; // final use !!!
@@ -401,7 +402,7 @@ void ImprovedNSGA2::greedySortInitializePopulation(vector<chromosome>& populatio
                 emplace_helper(chro, B_same_copy, B_not_same_copy);
                 emplace_helper(chro, A_same_copy, A_not_same_copy);
             }
-        }
+        // }
 
     }
 
@@ -1058,7 +1059,8 @@ void ImprovedNSGA2::particallySwapMutation(vector<chromosome>& population){
         parent = child;
         evaluation(population[i]);
 
-        if (checkObjBetter(population[i])) {
+        // if (checkObjBetter(population[i])) {
+        if (false) {
             chromosome new2 = {og2.obj2GreedyRunner(population[i].sequence)[0].sequence};
             evaluation(new2);
             population.emplace_back(new2);
