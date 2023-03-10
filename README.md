@@ -2,6 +2,8 @@
 
 ## Git
 
+[比赛官网地址](https://www.xuelangyun.com/#/cdc)
+
 [如何使用 Git 提交更新内容](./how-to-commit.md)
 
 ## Requirement
